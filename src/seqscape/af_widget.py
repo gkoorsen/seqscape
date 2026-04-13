@@ -309,7 +309,7 @@ def html_template(payload_json: str, title: str) -> str:
       }}
       const ref = document.createElement('div');
       ref.className = 'legend-item';
-      ref.innerHTML = `<span style="font-size:14px;color:#1F77B4;">★</span> references (${{payload.reference_count}})`;
+      ref.innerHTML = `<span style="font-size:14px;color:#000;">★</span> references (${{payload.reference_count}})`;
       legend.appendChild(ref);
     }}
 
@@ -376,7 +376,7 @@ def html_template(payload_json: str, title: str) -> str:
         const x = sx(c[0]), y = sy(c[1]);
         const color = state.point_colors[i];
         if (p.item_class === "reference") {{
-          drawFilledStar(ctx, x, y, color, "#111");
+          drawFilledStar(ctx, x, y, "#000", "#000");
           pointHitboxes.push({{ x, y, r: 10, point: p, cluster: state.point_cluster_names[i] }});
         }} else {{
           ctx.beginPath();

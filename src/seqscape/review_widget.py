@@ -595,7 +595,7 @@ def html_template(payload_json: str, title: str) -> str:
         const cid = pointCluster(p);
         const color = view.cluster_colors[cid] || '#A0A0A0';
         if (p.item_class === 'reference') {
-          drawStar(x, y, color);
+          drawStar(x, y, '#000');
           hitboxes.push({x, y, r: 10, item: p});
         } else {
           ctx.beginPath();
