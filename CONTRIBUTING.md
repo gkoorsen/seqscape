@@ -47,6 +47,10 @@ When reporting a problem, include:
 - exact error output
 - whether the issue occurs in `af-widget`, `sample-panel`, `align-panel`, or `review-widget`
 
+GitHub issue templates are available in:
+- `.github/ISSUE_TEMPLATE/bug_report.md`
+- `.github/ISSUE_TEMPLATE/feature_request.md`
+
 ## Maintainer
 
 Current maintainer:

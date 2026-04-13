@@ -4,6 +4,9 @@
 
 It is being extracted from the larger exploratory repository into a smaller publication-facing software package for the planned JOSS and BMC Bioinformatics papers.
 
+Repository:
+- `https://github.com/gkoorsen/seqscape`
+
 ## Current Status
 
 - package CLI implemented in [src/seqscape](/Users/gerritkoorsen/ciderseq-mono/cideseq-mono/seqscape/src/seqscape)
@@ -14,6 +17,7 @@ It is being extracted from the larger exploratory repository into a smaller publ
   - `review-widget`
 - package test suite present
 - synthetic end-to-end smoke test passing
+- under active development
 
 ## Installation
 

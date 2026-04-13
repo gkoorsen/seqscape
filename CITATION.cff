@@ -3,10 +3,12 @@ message: "If you use SeqScape, please cite the software metadata below. Update t
 title: "SeqScape"
 type: software
 version: 0.1.0
+url: "https://github.com/gkoorsen/seqscape"
+repository-code: "https://github.com/gkoorsen/seqscape"
 authors:
   - family-names: "Koorsen"
     given-names: "Gerrit"
-    email: "g.koorsen@gmail.com"
+    email: "gkoorsen@uj.ac.za"
 license: "MIT"
 abstract: >-
   SeqScape is a staged workflow for sequence-space exploration, representative
