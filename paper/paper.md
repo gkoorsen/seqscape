@@ -20,7 +20,7 @@ bibliography: paper.bib
 
 # Summary
 
-SeqScape is a staged software workflow for exploring large sequence collections in alignment-free sequence space, selecting representative subsets for tractable downstream analysis, and reviewing the resulting alignment-based structure in interactive visualizations. The software provides four connected stages: `af-widget`, `sample-panel`, `align-panel`, and `review-widget`. Together, these stages support a pragmatic analysis path in which large sequence collections are first organized in alignment-free space, then sampled proportionally, then validated and interpreted using pairwise identity matrices, ordination, agglomerative clustering, and reference-space summaries. The workflow was developed in the context of viral genomics, but is intentionally general enough to support other compact sequence collections such as genes, ORFs, or similar homologous sequence sets.
+SeqScape is a staged software workflow for exploring large sequence collections in alignment-free sequence space, selecting representative subsets for tractable downstream analysis, and reviewing the resulting alignment-based structure in interactive visualizations. The software provides four connected stages: `af-widget`, `sample-panel`, `align-panel`, and `review-widget`. Together, these stages support a pragmatic analysis path in which large sequence collections are first organized in alignment-free space, then sampled proportionally, then validated and interpreted using pairwise identity matrices, ordination, agglomerative clustering, and reference-space summaries. The workflow combines UMAP-based embedding [@mcinnes2018umap], Leiden clustering [@traag2019leiden], pairwise sequence identity estimation using Biopython [@cock2009biopython] or external aligners such as MUSCLE [@edgar2004muscle] and MAFFT [@katoh2013mafft], and interactive HTML review outputs. The workflow was developed in the context of viral genomics, but is intentionally general enough to support other compact sequence collections such as genes, ORFs, or similar homologous sequence sets.
 
 # Statement of need
 
@@ -42,7 +42,7 @@ SeqScape provides four connected stages.
 
 ## 1. Alignment-free sequence-space widget
 
-The `af-widget` stage builds an interactive alignment-free parameter explorer over genomes plus a reference panel. Sequences are represented in k-mer space, embedded with UMAP, and clustered with Leiden. Multiple parameter states can be precomputed and compared through a single HTML widget.
+The `af-widget` stage builds an interactive alignment-free parameter explorer over genomes plus a reference panel. Sequences are represented in k-mer space, embedded with UMAP [@mcinnes2018umap], and clustered with Leiden [@traag2019leiden]. Multiple parameter states can be precomputed and compared through a single HTML widget.
 
 ## 2. Representative panel sampling
 
@@ -50,7 +50,7 @@ The `sample-panel` stage selects a reduced representative panel from a chosen al
 
 ## 3. Pairwise alignment panel
 
-The `align-panel` stage computes pairwise identity and distance matrices for the sampled panel using Biopython pairwise alignment or external aligners such as MUSCLE or MAFFT. This stage writes reusable identity, distance, and ordination outputs for downstream review.
+The `align-panel` stage computes pairwise identity and distance matrices for the sampled panel using Biopython pairwise alignment [@cock2009biopython] or external aligners such as MUSCLE [@edgar2004muscle] or MAFFT [@katoh2013mafft]. This stage writes reusable identity, distance, and ordination outputs for downstream review.
 
 ## 4. Post-alignment review widget
 
@@ -67,4 +67,4 @@ SeqScape is implemented in Python and distributed as an open-source package. Sou
 Before submission, the following still need to be finalized in this paper draft:
 
 - release DOI after tagging and Zenodo archiving
-- any citations to external methods or dependencies that should be included in `paper.bib`
+- any additional domain-specific citations that should be included in `paper.bib`
