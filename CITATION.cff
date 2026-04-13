@@ -9,6 +9,8 @@ authors:
   - family-names: "Koorsen"
     given-names: "Gerrit"
     email: "gkoorsen@uj.ac.za"
+    affiliation: "Department of Biochemistry, University of Johannesburg, Johannesburg, South Africa"
+    orcid: "https://orcid.org/0000-0001-5159-1806"
 license: "MIT"
 abstract: >-
   SeqScape is a staged workflow for sequence-space exploration, representative

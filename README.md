@@ -98,6 +98,9 @@ Koorsen G. SeqScape. Version 0.1.0.
 
 The release DOI will be added before JOSS submission.
 
+JOSS manuscript draft:
+- [paper/paper.md](/Users/gerritkoorsen/ciderseq-mono/cideseq-mono/seqscape/paper/paper.md)
+
 ## Contributing
 
 Contribution guidance is in:
