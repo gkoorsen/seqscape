@@ -15,6 +15,8 @@ Repository:
   - `sample-panel`
   - `align-panel`
   - `review-widget`
+- auxiliary export command available:
+  - `export-clusters`
 - package test suite present
 - synthetic end-to-end smoke test passing
 - under active development
@@ -56,6 +58,9 @@ python sequence_space_pipeline.py --help
 2. `sample-panel`
 3. `align-panel`
 4. `review-widget`
+
+Auxiliary command:
+- `export-clusters`
 
 See:
 - [docs/workflow.md](/Users/gerritkoorsen/ciderseq-mono/cideseq-mono/seqscape/docs/workflow.md)

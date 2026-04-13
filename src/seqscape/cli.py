@@ -59,6 +59,19 @@ def parse_args() -> argparse.Namespace:
     ap_review.add_argument("--umap-spread", type=float, default=0.8)
     ap_review.add_argument("--umap-seed", type=int, default=42)
     ap_review.add_argument("--outdir", required=True)
+
+    ap_export = sub.add_parser("export-clusters", help="Export cluster members to per-cluster FASTA files")
+    ap_export.add_argument("--sequence-fasta", required=True)
+    ap_export.add_argument("--reference-fasta", default="")
+    ap_export.add_argument("--cluster-tsv", required=True)
+    ap_export.add_argument("--manifest-tsv", default="")
+    ap_export.add_argument("--id-column", default="id")
+    ap_export.add_argument("--cluster-column", default="cluster")
+    ap_export.add_argument("--filter-column", default="")
+    ap_export.add_argument("--filter-value", default="")
+    ap_export.add_argument("--cluster-list", default="")
+    ap_export.add_argument("--filename-prefix", default="")
+    ap_export.add_argument("--outdir", required=True)
     return ap.parse_args()
 
 
@@ -80,6 +93,10 @@ def main() -> None:
         from . import review_widget
 
         review_widget.run(args)
+    elif args.cmd == "export-clusters":
+        from . import export_clusters
+
+        export_clusters.run(args)
 
 
 if __name__ == "__main__":
