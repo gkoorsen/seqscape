@@ -1,0 +1,21 @@
+cff-version: 1.2.0
+message: "If you use SeqScape, please cite the software metadata below. Update this file with the release DOI before JOSS submission."
+title: "SeqScape"
+type: software
+version: 0.1.0
+authors:
+  - family-names: "Koorsen"
+    given-names: "Gerrit"
+    email: "g.koorsen@gmail.com"
+license: "MIT"
+abstract: >-
+  SeqScape is a staged workflow for sequence-space exploration, representative
+  panel sampling, pairwise alignment review, and reference-space
+  interpretation.
+keywords:
+  - bioinformatics
+  - sequence space
+  - umap
+  - clustering
+  - representative sampling
+  - viral genomics

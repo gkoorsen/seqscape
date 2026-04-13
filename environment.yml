@@ -1,0 +1,14 @@
+name: seqscape
+channels:
+  - conda-forge
+dependencies:
+  - python>=3.10
+  - numpy
+  - scipy
+  - scikit-learn
+  - biopython
+  - matplotlib
+  - igraph
+  - pip
+  - pip:
+      - leidenalg

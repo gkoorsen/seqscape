@@ -1,0 +1,13 @@
+__pycache__/
+*.pyc
+.DS_Store
+.pytest_cache/
+.mypy_cache/
+dist/
+build/
+*.egg-info/
+*.html
+*.png
+*.svg
+*.tsv
+*.csv

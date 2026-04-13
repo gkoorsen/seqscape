@@ -1,0 +1,30 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "seqscape"
+version = "0.1.0"
+description = "Sequence-space exploration, representative sampling, and alignment-based review"
+readme = "README.md"
+requires-python = ">=3.10"
+authors = []
+dependencies = [
+  "numpy",
+  "scipy",
+  "scikit-learn",
+  "biopython",
+  "matplotlib",
+  "igraph",
+  "leidenalg",
+  "umap-learn",
+]
+
+[project.scripts]
+seqscape = "seqscape.cli:main"
+
+[tool.setuptools]
+package-dir = {"" = "src"}
+
+[tool.setuptools.packages.find]
+where = ["src"]
