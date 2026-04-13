@@ -250,7 +250,7 @@ def html_template(payload_json: str, title: str) -> str:
       flex-wrap: wrap;
       gap: 10px;
       margin: 10px 0 14px;
-      font-size: 12px;
+      font-size: 13px;
     }}
     .legend-item {{
       display: flex;
@@ -259,7 +259,7 @@ def html_template(payload_json: str, title: str) -> str:
       background: white;
       border: 1px solid #ddd6ca;
       border-radius: 999px;
-      padding: 4px 9px;
+      padding: 5px 10px;
     }}
     .swatch {{
       width: 12px;
@@ -443,15 +443,21 @@ def html_template(payload_json: str, title: str) -> str:
       const baseOrder = colorView.cluster_order || [];
       const baseColors = colorView.cluster_colors || {};
       const grouped = new Map();
+      let visibleReferenceCount = 0;
       let totalGenomes = 0;
       for (const p of points) {
-        if (p.item_class !== 'genome') continue;
+        if (p.item_class === 'reference') {
+          visibleReferenceCount += 1;
+          continue;
+        }
         const cid = pointCluster(p);
         if (!grouped.has(cid)) grouped.set(cid, []);
         grouped.get(cid).push(pointCoords(p));
         totalGenomes += 1;
       }
-      const cluster_order = baseOrder.filter(cid => grouped.has(cid));
+      const cluster_order = baseOrder.length
+        ? baseOrder.filter(cid => grouped.has(cid))
+        : Array.from(grouped.keys()).sort();
       const cluster_genome_counts = {};
       const cluster_pct = {};
       const labels = [];
@@ -479,7 +485,7 @@ def html_template(payload_json: str, title: str) -> str:
           }
         }
       });
-      return {cluster_order, cluster_colors: baseColors, cluster_genome_counts, cluster_pct, labels, hulls, totalGenomes};
+      return {cluster_order, cluster_colors: baseColors, cluster_genome_counts, cluster_pct, labels, hulls, totalGenomes, visibleReferenceCount};
     }
     function setLegend() {
       legend.innerHTML = '';
@@ -488,17 +494,15 @@ def html_template(payload_json: str, title: str) -> str:
       for (const cid of view.cluster_order) {
         const item = document.createElement('div');
         item.className = 'legend-item';
-        const swatch = document.createElement('span');
-        swatch.className = 'swatch';
-        swatch.style.background = view.cluster_colors[cid];
-        const text = document.createElement('span');
         const count = view.cluster_genome_counts[cid] || 0;
         const pct = view.cluster_pct[cid] || 0;
-        text.textContent = `${cid} (${count}, ${pct.toFixed(1)}%)`;
-        item.appendChild(swatch);
-        item.appendChild(text);
+        item.innerHTML = `<span class="swatch" style="background:${view.cluster_colors[cid]}"></span>${cid} (${count}, ${pct.toFixed(1)}%)`;
         legend.appendChild(item);
       }
+      const ref = document.createElement('div');
+      ref.className = 'legend-item';
+      ref.innerHTML = `<span style="font-size:14px;color:#000;">★</span> references (${view.visibleReferenceCount})`;
+      legend.appendChild(ref);
       const thr = currentThreshold();
       const detail = scheme === 'leiden_cluster' ? 'original Leiden clusters' : `complete-linkage agglomerative clusters @ ${thr}`;
       const refDetail = mode === 'best2' ? (referenceBestMode === 'include' ? 'refs use self as best' : 'refs use nearest non-self refs') : 'reference best-vs-second convention hidden';
