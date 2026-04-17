@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 import math
 from collections import defaultdict
 from pathlib import Path
@@ -8,7 +9,9 @@ import numpy as np
 from Bio.Seq import Seq
 from Bio.SeqRecord import SeqRecord
 
+from .af_widget import format_resolution
 from .io_utils import load_fasta_records, read_assignments, read_coords, write_fasta, write_tsv
+from .validation import compression_ratio, full_pairwise_count, panel_fraction_pct, pearson_cluster_proportion_preservation
 
 
 def largest_remainder_alloc(weights: dict[str, int], total: int) -> dict[str, int]:
@@ -112,12 +115,25 @@ def select_reference_panel(assignments: list[dict], coords_map: dict[str, tuple[
 def run(args) -> None:
     outdir = Path(args.outdir).resolve()
     outdir.mkdir(parents=True, exist_ok=True)
-    chosen_slug = f"k{args.chosen_kmer}_n{args.chosen_neighbors}_d{str(args.chosen_min_dist).replace('.', 'p')}"
+    chosen_slug = (
+        f"k{args.chosen_kmer}_n{args.chosen_neighbors}_d{str(args.chosen_min_dist).replace('.', 'p')}"
+        f"_r{format_resolution(args.chosen_leiden_resolution)}"
+    )
     state_dir = Path(args.af_widget_dir).resolve() / "states" / chosen_slug
     assignments_tsv = state_dir / "assignments.tsv"
     coords_csv = state_dir / "coords.csv"
     if not assignments_tsv.is_file() or not coords_csv.is_file():
-        raise RuntimeError(f"Chosen AF state not found: {state_dir}")
+        legacy_slug = f"k{args.chosen_kmer}_n{args.chosen_neighbors}_d{str(args.chosen_min_dist).replace('.', 'p')}"
+        legacy_state_dir = Path(args.af_widget_dir).resolve() / "states" / legacy_slug
+        legacy_assignments = legacy_state_dir / "assignments.tsv"
+        legacy_coords = legacy_state_dir / "coords.csv"
+        if legacy_assignments.is_file() and legacy_coords.is_file():
+            chosen_slug = legacy_slug
+            state_dir = legacy_state_dir
+            assignments_tsv = legacy_assignments
+            coords_csv = legacy_coords
+        else:
+            raise RuntimeError(f"Chosen AF state not found: {state_dir}")
 
     genome_records = load_fasta_records(Path(args.input_fasta).resolve())
     ref_records = load_fasta_records(Path(args.reference_fasta).resolve())
@@ -150,6 +166,21 @@ def run(args) -> None:
     write_fasta(panel_records, panel_fasta)
     write_tsv(manifest_tsv, sorted(panel_items, key=lambda row: (row["item_class"] != "reference", row["source_cluster"], int(row["selection_rank"]))), ["id", "label", "item_class", "source_cluster", "selection_rank", "selection_mode", "length_bp", "af_umap1", "af_umap2", "centroid_distance"])
     write_tsv(quota_tsv, quota_rows, ["cluster", "genomes_in_cluster", "allocated_genome_samples"])
+    full_cluster_counts = {row["cluster"]: int(row["genomes_in_cluster"]) for row in quota_rows}
+    panel_cluster_counts = {row["cluster"]: int(row["allocated_genome_samples"]) for row in quota_rows}
+    pearson_r, pearson_p = pearson_cluster_proportion_preservation(full_cluster_counts, panel_cluster_counts)
+    validation_metrics = {
+        "N": len(genome_records),
+        "sample_size_total": args.sample_size,
+        "sample_size_genomes": len(selected_genomes),
+        "sample_size_references": len(selected_refs),
+        "panel_fraction_pct": panel_fraction_pct(args.sample_size, len(genome_records)),
+        "full_pairwise_count": full_pairwise_count(len(genome_records)),
+        "compression_ratio_vs_panel": compression_ratio(len(genome_records), args.sample_size),
+        "pearson_r_full_vs_panel_cluster_proportions": pearson_r,
+        "pearson_pvalue": pearson_p,
+    }
+    (outdir / "validation_metrics.json").write_text(json.dumps(validation_metrics, indent=2))
     with summary_txt.open("w") as fh:
         fh.write(f"input_fasta\t{Path(args.input_fasta).resolve()}\n")
         fh.write(f"reference_fasta\t{Path(args.reference_fasta).resolve()}\n")
@@ -158,6 +189,11 @@ def run(args) -> None:
         fh.write(f"sample_size\t{args.sample_size}\n")
         fh.write(f"references_retained\t{len(selected_refs)}\n")
         fh.write(f"genome_budget\t{genome_budget}\n")
+        fh.write(f"panel_fraction_pct\t{validation_metrics['panel_fraction_pct']:.6f}\n")
+        fh.write(f"full_pairwise_count\t{validation_metrics['full_pairwise_count']}\n")
+        fh.write(f"compression_ratio_vs_panel\t{validation_metrics['compression_ratio_vs_panel']:.6f}\n")
+        fh.write(f"pearson_r_full_vs_panel_cluster_proportions\t{validation_metrics['pearson_r_full_vs_panel_cluster_proportions']:.6f}\n")
+        fh.write(f"pearson_pvalue\t{validation_metrics['pearson_pvalue']:.6e}\n")
         fh.write("selection_scheme\tall_references_kept; genomes allocated proportionally across Leiden clusters; within-cluster centroid-first then farthest-point coverage\n")
         fh.write(f"representative_panel_fasta\t{panel_fasta}\n")
         fh.write(f"representative_panel_manifest\t{manifest_tsv}\n")

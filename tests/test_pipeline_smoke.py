@@ -75,14 +75,20 @@ class PipelineSmokeTests(unittest.TestCase):
                     seed=42,
                     leiden_neighbor_k=3,
                     leiden_resolution=0.01,
+                    leiden_resolution_values="0.01",
                     default_kmer=3,
                     default_neighbors=3,
                     default_min_dist=0.3,
+                    default_leiden_resolution=0.01,
+                    validation_subsample_size=4,
+                    validation_replicates=1,
+                    validation_neighbors="2",
                     outdir=str(af_out),
                 )
             )
             self.assertTrue((af_out / "af_leiden_parameter_widget.html").is_file())
-            self.assertTrue((af_out / "states" / "k3_n3_d0p3" / "assignments.tsv").is_file())
+            self.assertTrue((af_out / "states" / "k3_n3_d0p3_r1e-02" / "assignments.tsv").is_file())
+            self.assertTrue((af_out / "states" / "k3_n3_d0p3_r1e-02" / "validation_metrics.json").is_file())
 
             sampling.run(
                 Namespace(
@@ -92,6 +98,7 @@ class PipelineSmokeTests(unittest.TestCase):
                     chosen_kmer=3,
                     chosen_neighbors=3,
                     chosen_min_dist=0.3,
+                    chosen_leiden_resolution=0.01,
                     sample_size=5,
                     outdir=str(panel_out),
                 )
@@ -99,6 +106,7 @@ class PipelineSmokeTests(unittest.TestCase):
             self.assertTrue((panel_out / "representative_panel.fasta").is_file())
             self.assertTrue((panel_out / "representative_panel_manifest.tsv").is_file())
             self.assertTrue((panel_out / "summary.txt").is_file())
+            self.assertTrue((panel_out / "validation_metrics.json").is_file())
 
             align_panel.run(
                 Namespace(
@@ -116,6 +124,7 @@ class PipelineSmokeTests(unittest.TestCase):
             self.assertTrue((align_out / "matrix_distance.tsv").is_file())
             self.assertTrue((align_out / "pcoa_coords.csv").is_file())
             self.assertTrue((align_out / "summary.txt").is_file())
+            self.assertTrue((align_out / "validation_metrics.json").is_file())
 
             review_widget.run(
                 Namespace(
@@ -136,6 +145,7 @@ class PipelineSmokeTests(unittest.TestCase):
             self.assertTrue((review_out / "heatmap_genome_x_reference.html").is_file())
             self.assertTrue((review_out / "heatmap_panel_square.html").is_file())
             self.assertTrue((review_out / "summary.txt").is_file())
+            self.assertTrue((review_out / "validation_metrics.json").is_file())
 
 
 if __name__ == "__main__":

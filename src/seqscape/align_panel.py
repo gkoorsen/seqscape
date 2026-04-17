@@ -1,7 +1,9 @@
 from __future__ import annotations
 
 import csv
+import json
 import shutil
+import time
 from pathlib import Path
 
 import numpy as np
@@ -9,6 +11,7 @@ import numpy as np
 from .alignment import build_identity_matrix, identity_to_distance, resolve_muscle_exe
 from .io_utils import load_fasta_records
 from .ordination import pcoa
+from .validation import pcoa_variance_explained
 
 
 def write_matrix_tsv(path: Path, ids: list[str], matrix: np.ndarray, fmt: str) -> None:
@@ -36,11 +39,13 @@ def run(args) -> None:
         items.append(item)
 
     muscle_exe = resolve_muscle_exe(args.muscle)
+    started = time.perf_counter()
     ids, ident = build_identity_matrix(items, args.aligner, args.mafft, muscle_exe, args.jobs, args.progress_every)
+    runtime_seconds = time.perf_counter() - started
     dist = identity_to_distance(ident)
     write_matrix_tsv(outdir / "matrix_identity.tsv", ids, ident, "{:.6f}")
     write_matrix_tsv(outdir / "matrix_distance.tsv", ids, dist, "{:.6f}")
-    coords_raw, _ = pcoa(dist)
+    coords_raw, eigvals = pcoa(dist)
     coords = np.zeros((len(ids), 2), dtype=float)
     if coords_raw.shape[1] >= 1:
         coords[:, 0] = coords_raw[:, 0]
@@ -53,11 +58,23 @@ def run(args) -> None:
             writer.writerow([seq_id, f"{float(x):.6f}", f"{float(y):.6f}"])
     shutil.copy2(Path(args.manifest_tsv).resolve(), outdir / "representative_panel_manifest.tsv")
     shutil.copy2(Path(args.panel_fasta).resolve(), outdir / "representative_panel.fasta")
+    axis1_pct, axis2_pct = pcoa_variance_explained(eigvals)
+    validation_metrics = {
+        "aligner": args.aligner,
+        "jobs": args.jobs,
+        "runtime_seconds": runtime_seconds,
+        "pcoa_axis1_variance_explained_pct": axis1_pct,
+        "pcoa_axis2_variance_explained_pct": axis2_pct,
+    }
+    (outdir / "validation_metrics.json").write_text(json.dumps(validation_metrics, indent=2))
     with (outdir / "summary.txt").open("w") as fh:
         fh.write(f"panel_fasta\t{Path(args.panel_fasta).resolve()}\n")
         fh.write(f"manifest_tsv\t{Path(args.manifest_tsv).resolve()}\n")
         fh.write(f"aligner\t{args.aligner}\n")
         fh.write(f"jobs\t{args.jobs}\n")
+        fh.write(f"runtime_seconds\t{runtime_seconds:.6f}\n")
+        fh.write(f"pcoa_axis1_variance_explained_pct\t{axis1_pct:.6f}\n")
+        fh.write(f"pcoa_axis2_variance_explained_pct\t{axis2_pct:.6f}\n")
         fh.write(f"matrix_identity\t{outdir / 'matrix_identity.tsv'}\n")
         fh.write(f"matrix_distance\t{outdir / 'matrix_distance.tsv'}\n")
         fh.write(f"pcoa_coords\t{outdir / 'pcoa_coords.csv'}\n")
