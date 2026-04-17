@@ -604,6 +604,10 @@ def html_template(payload_json: str, title: str) -> str:
       <button class="toggle active" id="btn-ref-include">Refs include self</button>
       <button class="toggle" id="btn-ref-exclude">Refs exclude self</button>
     </div>
+    <div class="slider-wrap">
+      <label for="novel-threshold-input">Best-vs-2nd best cutoff (%)</label>
+      <input id="novel-threshold-input" type="number" min="0" max="100" step="0.1" style="width:120px;">
+    </div>
     <div class="toolbar">
       <button class="toggle active" id="btn-leiden">Color by Leiden</button>
       <button class="toggle" id="btn-agg">Color by Agglomerative</button>
@@ -683,6 +687,7 @@ def html_template(payload_json: str, title: str) -> str:
     const btnTreeCluster = document.getElementById('btn-tree-cluster');
     const btnScaleFull = document.getElementById('btn-scale-full');
     const btnScaleRobust = document.getElementById('btn-scale-robust');
+    const novelThresholdInput = document.getElementById('novel-threshold-input');
     const thresholdSlider = document.getElementById('threshold');
     const thresholdValue = document.getElementById('threshold-value');
     const treeThresholdSlider = document.getElementById('tree-threshold');
@@ -703,6 +708,7 @@ def html_template(payload_json: str, title: str) -> str:
     const afKmerValues = Array.from(new Set(afStates.map(s => Number(s.kmer)))).sort((a, b) => a - b);
     const afNeighborsValues = Array.from(new Set(afStates.map(s => Number(s.neighbors)))).sort((a, b) => a - b);
     const afMinDistValues = Array.from(new Set(afStates.map(s => Number(s.min_dist)))).sort((a, b) => a - b);
+    novelThresholdInput.value = String(payload.novel_threshold);
     thresholdSlider.max = String(thresholds.length - 1);
     thresholdSlider.value = String(payload.default_threshold_index);
     treeThresholdSlider.max = String(thresholds.length - 1);
@@ -740,6 +746,11 @@ def html_template(payload_json: str, title: str) -> str:
     }
     function currentTreeThreshold() {
       return thresholds[Number(treeThresholdSlider.value)];
+    }
+    function currentNovelThreshold() {
+      const value = Number(novelThresholdInput.value);
+      if (!Number.isFinite(value)) return Number(payload.novel_threshold);
+      return Math.max(0, Math.min(100, value));
     }
     function currentAfValues() {
       return {
@@ -972,7 +983,7 @@ def html_template(payload_json: str, title: str) -> str:
       const refDetail = mode === 'best2' ? (referenceBestMode === 'include' ? 'refs use self as best' : 'refs use nearest non-self refs') : 'reference best-vs-second convention hidden';
       const {minLen, maxLen} = currentLengthBounds();
       const scaleDetail = `${scaleMode} scale`;
-      meta.textContent = `${mode.toUpperCase()} | ${detail}${afDetail} | ${scaleDetail} | ${refDetail} | best-ref cutoff ${payload.novel_threshold}% | visible points ${points.length}/${payload.points.length} | length ${minLen}-${maxLen} nt`;
+      meta.textContent = `${mode.toUpperCase()} | ${detail}${afDetail} | ${scaleDetail} | ${refDetail} | best-ref cutoff ${currentNovelThreshold()}% | visible points ${points.length}/${payload.points.length} | length ${minLen}-${maxLen} nt`;
     }
     function metricCard(label, value) {
       return `<div class="metric"><span class="label">${label}</span><span class="value">${value}</span></div>`;
@@ -986,6 +997,9 @@ def html_template(payload_json: str, title: str) -> str:
       const align = payload.validation.align || {};
       const review = payload.validation.review || {};
       const afState = currentAfState();
+      const visibleNovelGenomes = filteredPoints().filter(p =>
+        p.item_class === 'genome' && Number(p.best_identity) < currentNovelThreshold()
+      ).length;
       metrics.innerHTML = [
         metricCard('Panel Fraction', sample.panel_fraction_pct !== undefined ? `${sample.panel_fraction_pct.toFixed(2)}%` : 'NA'),
         metricCard('Pearson r', sample.pearson_r_full_vs_panel_cluster_proportions !== undefined ? sample.pearson_r_full_vs_panel_cluster_proportions.toFixed(4) : 'NA'),
@@ -995,7 +1009,7 @@ def html_template(payload_json: str, title: str) -> str:
         metricCard('Tree Clusters', treeMetrics.cluster_count !== undefined ? treeMetrics.cluster_count : 'NA'),
         metricCard('Leiden Clusters', afState ? afState.cluster_count : 'NA'),
         metricCard('NMI', thrMetrics.nmi !== undefined ? thrMetrics.nmi.toFixed(3) : 'NA'),
-        metricCard('Novel < Cutoff', review.novel_genome_count !== undefined ? review.novel_genome_count : 'NA'),
+        metricCard('Novel < Cutoff', review.novel_genome_count !== undefined ? visibleNovelGenomes : 'NA'),
       ].join('');
     }
     function agreementColor(value) {
@@ -1272,7 +1286,8 @@ def html_template(payload_json: str, title: str) -> str:
       ctx.lineWidth = 1;
       ctx.strokeRect(box.x, box.y, box.w, box.h);
       if (mode === 'best2') {
-        const thrX = sx(payload.novel_threshold, b);
+        const cutoff = currentNovelThreshold();
+        const thrX = sx(cutoff, b);
         ctx.strokeStyle = '#666';
         ctx.setLineDash([6, 6]);
         ctx.beginPath();
@@ -1280,6 +1295,17 @@ def html_template(payload_json: str, title: str) -> str:
         ctx.lineTo(thrX, box.y + box.h);
         ctx.stroke();
         ctx.setLineDash([]);
+        ctx.strokeStyle = '#333';
+        ctx.beginPath();
+        ctx.moveTo(thrX, box.y + box.h);
+        ctx.lineTo(thrX, box.y + box.h + 9);
+        ctx.stroke();
+        const cutoffLabel = `cutoff ${cutoff.toFixed(1)}%`;
+        ctx.font = '12px Helvetica';
+        const labelWidth = ctx.measureText(cutoffLabel).width;
+        const labelX = Math.max(box.x + 4, Math.min(box.x + box.w - labelWidth - 4, thrX - labelWidth / 2));
+        ctx.fillStyle = '#222';
+        ctx.fillText(cutoffLabel, labelX, box.y + box.h + 24);
       }
       for (const hull of view.hulls) {
         const color = view.cluster_colors[hull.cluster];
@@ -1424,6 +1450,7 @@ def html_template(payload_json: str, title: str) -> str:
     btnScaleRobust.addEventListener('click', () => setScaleMode('robust'));
     thresholdSlider.addEventListener('input', () => { setLegend(); render(); });
     treeThresholdSlider.addEventListener('input', () => { setLegend(); render(); });
+    novelThresholdInput.addEventListener('input', () => { setLegend(); render(); });
     afKmerSlider.addEventListener('input', () => { selectedAfStateId = null; setLegend(); render(); });
     afNeighborsSlider.addEventListener('input', () => { selectedAfStateId = null; setLegend(); render(); });
     afMinDistSlider.addEventListener('input', () => { selectedAfStateId = null; setLegend(); render(); });
