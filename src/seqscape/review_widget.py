@@ -551,6 +551,33 @@ def html_template(payload_json: str, title: str) -> str:
       margin: 0 0 8px;
       line-height: 1.35;
     }
+    .agreement-cell {
+      cursor: pointer;
+      font-weight: 700;
+      transition: outline 0.12s ease, transform 0.12s ease;
+    }
+    .agreement-cell:hover {
+      outline: 2px solid #222;
+      outline-offset: -2px;
+      transform: scale(1.02);
+    }
+    .agreement-best {
+      color: #333;
+      background: #f8f2e6;
+      border: 1px solid #e2d2b8;
+      border-radius: 10px;
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      justify-content: space-between;
+      margin: 8px 0 10px;
+      padding: 9px 11px;
+    }
+    .agreement-best button {
+      flex: 0 0 auto;
+      padding: 6px 11px;
+      font-size: 12px;
+    }
     canvas {
       width: 100%;
       height: auto;
@@ -702,6 +729,7 @@ def html_template(payload_json: str, title: str) -> str:
     let scaleMode = 'robust';
     let agreementVisible = false;
     let agreementTarget = 'agglomerative';
+    let selectedAfStateId = defaultAfState ? defaultAfState.state_id : null;
     let hover = null;
     let hitboxes = [];
     const box = {x: 90, y: 90, w: 1220, h: 800};
@@ -722,6 +750,13 @@ def html_template(payload_json: str, title: str) -> str:
     }
     function currentAfState() {
       const vals = currentAfValues();
+      const selectedState = afStates.find(s => s.state_id === selectedAfStateId);
+      if (selectedState &&
+          Number(selectedState.kmer) === vals.kmer &&
+          Number(selectedState.neighbors) === vals.neighbors &&
+          Number(selectedState.min_dist) === vals.min_dist) {
+        return selectedState;
+      }
       return afStates.find(s =>
         Number(s.kmer) === vals.kmer &&
         Number(s.neighbors) === vals.neighbors &&
@@ -968,6 +1003,48 @@ def html_template(payload_json: str, title: str) -> str:
       const v = Math.max(0, Math.min(1, value));
       return `rgba(76, 120, 168, ${0.10 + 0.70 * v})`;
     }
+    function thresholdIndexFor(value) {
+      const numeric = Number(value);
+      const idx = thresholds.findIndex(t => Math.abs(Number(t) - numeric) < 1e-9);
+      return idx >= 0 ? idx : 0;
+    }
+    function setAfSlidersFromState(stateId) {
+      const state = afStates.find(s => s.state_id === stateId);
+      if (!state) return false;
+      const kIdx = afKmerValues.findIndex(v => v === Number(state.kmer));
+      const nIdx = afNeighborsValues.findIndex(v => v === Number(state.neighbors));
+      const dIdx = afMinDistValues.findIndex(v => Math.abs(v - Number(state.min_dist)) < 1e-9);
+      if (kIdx >= 0) afKmerSlider.value = String(kIdx);
+      if (nIdx >= 0) afNeighborsSlider.value = String(nIdx);
+      if (dIdx >= 0) afMinDistSlider.value = String(dIdx);
+      selectedAfStateId = state.state_id;
+      return true;
+    }
+    function agreementRecord(target, stateId, threshold) {
+      const numericThreshold = Number(threshold);
+      return (payload.cluster_agreement || []).find(r =>
+        r.target === target &&
+        r.af_state === stateId &&
+        Math.abs(Number(r.threshold) - numericThreshold) < 1e-9
+      ) || null;
+    }
+    function bestAgreementRecord(target) {
+      const rows = (payload.cluster_agreement || []).filter(r => r.target === target);
+      if (!rows.length) return null;
+      return rows.reduce((best, row) => Number(row.nmi) > Number(best.nmi) ? row : best, rows[0]);
+    }
+    function applyAgreementRecord(record) {
+      if (!record) return;
+      setAfSlidersFromState(record.af_state);
+      if (record.target === 'tree') {
+        treeThresholdSlider.value = String(thresholdIndexFor(record.threshold));
+        setScheme('tree_cluster');
+      } else {
+        thresholdSlider.value = String(thresholdIndexFor(record.threshold));
+        setScheme('agglomerative');
+      }
+      setMode('afumap');
+    }
     function setAgreementPanel() {
       agreementPanel.classList.toggle('active', agreementVisible);
       btnAgreement.classList.toggle('active', agreementVisible);
@@ -981,14 +1058,21 @@ def html_template(payload_json: str, title: str) -> str:
       }
       const thresholdsForRows = Array.from(new Set(rows.map(r => r.threshold)));
       const stateOrder = afStates.map(s => s.state_id);
+      const hasResolution = rows.some(r => r.leiden_resolution !== undefined && r.leiden_resolution !== null);
       const byState = new Map();
       for (const row of rows) {
         if (!byState.has(row.af_state)) byState.set(row.af_state, []);
         byState.get(row.af_state).push(row);
       }
       const html = [];
+      const best = bestAgreementRecord(agreementTarget);
+      if (best) {
+        html.push(`<div class="agreement-best"><span><strong>Best ${agreementTarget} NMI:</strong> ${Number(best.nmi).toFixed(3)} at AF state ${best.af_state}, threshold ${best.threshold}, ${best.target_cluster_count} ${agreementTarget} clusters. Click any NMI cell to apply that state to the graph.</span><button class="toggle agreement-apply" data-target="${best.target}" data-af-state="${best.af_state}" data-threshold="${best.threshold}">Apply best</button></div>`);
+      }
       html.push('<table><thead><tr>');
-      html.push('<th>AF state</th><th>k</th><th>n</th><th>dist</th><th>Leiden K</th>');
+      html.push('<th>AF state</th><th>k</th><th>n</th><th>dist</th>');
+      if (hasResolution) html.push('<th>res</th>');
+      html.push('<th>Leiden K</th>');
       for (const thr of thresholdsForRows) html.push(`<th>${thr}</th>`);
       html.push('</tr></thead><tbody>');
       for (const stateId of stateOrder) {
@@ -997,12 +1081,17 @@ def html_template(payload_json: str, title: str) -> str:
         const first = values[0];
         const byThreshold = new Map(values.map(v => [v.threshold, v]));
         html.push('<tr>');
-        html.push(`<td>${stateId}</td><td>${first.kmer}</td><td>${first.neighbors}</td><td>${first.min_dist}</td><td>${first.af_cluster_count}</td>`);
+        html.push(`<td>${stateId}</td><td>${first.kmer}</td><td>${first.neighbors}</td><td>${first.min_dist}</td>`);
+        if (hasResolution) html.push(`<td>${first.leiden_resolution !== undefined && first.leiden_resolution !== null ? first.leiden_resolution : 'NA'}</td>`);
+        html.push(`<td>${first.af_cluster_count}</td>`);
         for (const thr of thresholdsForRows) {
           const rec = byThreshold.get(thr);
           const value = rec ? Number(rec.nmi) : NaN;
-          const title = rec ? `target clusters: ${rec.target_cluster_count}` : '';
-          html.push(`<td title="${title}" style="background:${agreementColor(value)}">${Number.isFinite(value) ? value.toFixed(3) : 'NA'}</td>`);
+          const isBest = best && rec && rec.af_state === best.af_state && Math.abs(Number(rec.threshold) - Number(best.threshold)) < 1e-9;
+          const title = rec ? `Apply AF ${rec.af_state} against ${rec.target} threshold ${rec.threshold}; target clusters: ${rec.target_cluster_count}` : '';
+          const attrs = rec ? ` class="agreement-cell${isBest ? ' best-nmi' : ''}" data-target="${rec.target}" data-af-state="${rec.af_state}" data-threshold="${rec.threshold}"` : '';
+          const border = isBest ? '; box-shadow: inset 0 0 0 2px #222' : '';
+          html.push(`<td${attrs} title="${title}" style="background:${agreementColor(value)}${border}">${Number.isFinite(value) ? value.toFixed(3) : 'NA'}</td>`);
         }
         html.push('</tr>');
       }
@@ -1320,6 +1409,12 @@ def html_template(payload_json: str, title: str) -> str:
     });
     btnAgreeAgg.addEventListener('click', () => { agreementTarget = 'agglomerative'; setAgreementPanel(); });
     btnAgreeTree.addEventListener('click', () => { agreementTarget = 'tree'; setAgreementPanel(); });
+    agreementContent.addEventListener('click', (event) => {
+      const el = event.target.closest('.agreement-cell, .agreement-apply');
+      if (!el) return;
+      const record = agreementRecord(el.dataset.target, el.dataset.afState, el.dataset.threshold);
+      applyAgreementRecord(record);
+    });
     btnRefInclude.addEventListener('click', () => setReferenceBestMode('include'));
     btnRefExclude.addEventListener('click', () => setReferenceBestMode('exclude'));
     btnLeiden.addEventListener('click', () => setScheme('leiden_cluster'));
@@ -1329,9 +1424,9 @@ def html_template(payload_json: str, title: str) -> str:
     btnScaleRobust.addEventListener('click', () => setScaleMode('robust'));
     thresholdSlider.addEventListener('input', () => { setLegend(); render(); });
     treeThresholdSlider.addEventListener('input', () => { setLegend(); render(); });
-    afKmerSlider.addEventListener('input', () => { setLegend(); render(); });
-    afNeighborsSlider.addEventListener('input', () => { setLegend(); render(); });
-    afMinDistSlider.addEventListener('input', () => { setLegend(); render(); });
+    afKmerSlider.addEventListener('input', () => { selectedAfStateId = null; setLegend(); render(); });
+    afNeighborsSlider.addEventListener('input', () => { selectedAfStateId = null; setLegend(); render(); });
+    afMinDistSlider.addEventListener('input', () => { selectedAfStateId = null; setLegend(); render(); });
     minLengthInput.addEventListener('input', () => { setLegend(); render(); });
     maxLengthInput.addEventListener('input', () => { setLegend(); render(); });
     setLegend();
