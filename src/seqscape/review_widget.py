@@ -985,8 +985,9 @@ def html_template(payload_json: str, title: str) -> str:
       const scaleDetail = `${scaleMode} scale`;
       meta.textContent = `${mode.toUpperCase()} | ${detail}${afDetail} | ${scaleDetail} | ${refDetail} | best-ref cutoff ${currentNovelThreshold()}% | visible points ${points.length}/${payload.points.length} | length ${minLen}-${maxLen} nt`;
     }
-    function metricCard(label, value) {
-      return `<div class="metric"><span class="label">${label}</span><span class="value">${value}</span></div>`;
+    function metricCard(label, value, tooltip) {
+      const tip = tooltip ? ` title="${tooltip}"` : '';
+      return `<div class="metric"${tip}><span class="label">${label}</span><span class="value">${value}</span></div>`;
     }
     function setMetrics() {
       const thr = currentThreshold();
@@ -1000,8 +1001,12 @@ def html_template(payload_json: str, title: str) -> str:
       const visibleNovelGenomes = filteredPoints().filter(p =>
         p.item_class === 'genome' && Number(p.best_identity) < currentNovelThreshold()
       ).length;
+      const minLineageSize = (sample.N && sample.sample_size_total)
+        ? Math.ceil(sample.N / sample.sample_size_total) : null;
       metrics.innerHTML = [
         metricCard('Panel Fraction', sample.panel_fraction_pct !== undefined ? `${sample.panel_fraction_pct.toFixed(2)}%` : 'NA'),
+        metricCard('Min Lineage Size', minLineageSize !== null ? `≥${minLineageSize} seqs` : 'NA',
+          'Minimum number of sequences a lineage needs in the full dataset to be reliably captured in the panel (= ⌈N / panel_size⌉). Lineages below this threshold may be missed by proportional sampling.'),
         metricCard('Pearson r', sample.pearson_r_full_vs_panel_cluster_proportions !== undefined ? sample.pearson_r_full_vs_panel_cluster_proportions.toFixed(4) : 'NA'),
         metricCard('Runtime', align.runtime_seconds !== undefined ? `${(align.runtime_seconds / 3600).toFixed(2)} h` : 'NA'),
         metricCard('PCoA Var', (align.pcoa_axis1_variance_explained_pct !== undefined && align.pcoa_axis2_variance_explained_pct !== undefined) ? `${align.pcoa_axis1_variance_explained_pct.toFixed(1)} / ${align.pcoa_axis2_variance_explained_pct.toFixed(1)}%` : 'NA'),
