@@ -202,9 +202,49 @@ def html_template(payload_json: str, title: str) -> str:
       font-weight: 700;
       margin-bottom: 6px;
     }}
-    .exportbar select {{
-      min-width: 180px;
+    .multiselect-wrap {{
+      position: relative;
+      min-width: 200px;
+    }}
+    .multiselect-toggle {{
+      width: 100%;
+      text-align: left;
       padding: 6px 8px;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+      background: white;
+      cursor: pointer;
+      font-size: 13px;
+    }}
+    .multiselect-menu {{
+      display: none;
+      position: absolute;
+      z-index: 100;
+      top: 100%;
+      left: 0;
+      min-width: 240px;
+      max-height: 260px;
+      overflow-y: auto;
+      background: white;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+      box-shadow: 0 4px 16px rgba(0,0,0,0.12);
+      padding: 4px 0;
+    }}
+    .multiselect-menu.open {{ display: block; }}
+    .multiselect-item, .multiselect-all {{
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 5px 12px;
+      font-size: 13px;
+      cursor: pointer;
+      user-select: none;
+    }}
+    .multiselect-item:hover, .multiselect-all:hover {{ background: #f5f2ec; }}
+    .multiselect-all {{
+      border-bottom: 1px solid #eee;
+      font-weight: 700;
     }}
     .exportbar input {{
       padding: 6px 8px;
@@ -311,8 +351,16 @@ def html_template(payload_json: str, title: str) -> str:
     </div>
     <div class="exportbar">
       <div>
-        <label for="export-cluster">Export Cluster</label>
-        <select id="export-cluster"></select>
+        <label>Export Clusters</label>
+        <div class="multiselect-wrap">
+          <button type="button" class="multiselect-toggle" id="export-cluster-toggle">
+            <span id="export-cluster-label">Select clusters ▾</span>
+          </button>
+          <div class="multiselect-menu" id="export-cluster-menu">
+            <label class="multiselect-all"><input type="checkbox" id="export-cluster-all"> All clusters</label>
+            <div id="export-cluster-items"></div>
+          </div>
+        </div>
       </div>
       <div>
         <label for="sample-size">Sample Size</label>
@@ -344,7 +392,11 @@ def html_template(payload_json: str, title: str) -> str:
     const neighborsValue = document.getElementById('neighbors-value');
     const minDistValue = document.getElementById('min-dist-value');
     const leidenResolutionValue = document.getElementById('leiden-resolution-value');
-    const exportCluster = document.getElementById('export-cluster');
+    const exportClusterToggle = document.getElementById('export-cluster-toggle');
+    const exportClusterMenu = document.getElementById('export-cluster-menu');
+    const exportClusterLabel = document.getElementById('export-cluster-label');
+    const exportClusterAll = document.getElementById('export-cluster-all');
+    const exportClusterItems = document.getElementById('export-cluster-items');
     const sampleSizeInput = document.getElementById('sample-size');
     const exportIdsBtn = document.getElementById('export-ids');
     const exportCmdBtn = document.getElementById('export-cmd');
@@ -411,32 +463,68 @@ def html_template(payload_json: str, title: str) -> str:
       URL.revokeObjectURL(url);
     }}
 
-    function syncExportOptions(state) {{
-      const prior = exportCluster.value;
-      exportCluster.innerHTML = '';
-      for (const cl of state.clusters) {{
-        const opt = document.createElement('option');
-        opt.value = cl.name;
-        opt.textContent = `${{cl.name}} (${{cl.genomes}}, ${{cl.pct.toFixed(1)}}%)`;
-        exportCluster.appendChild(opt);
+    exportClusterToggle.addEventListener('click', () => {{
+      exportClusterMenu.classList.toggle('open');
+    }});
+    document.addEventListener('click', evt => {{
+      if (!exportClusterToggle.contains(evt.target) && !exportClusterMenu.contains(evt.target)) {{
+        exportClusterMenu.classList.remove('open');
       }}
-      if (prior && state.clusters.some(cl => cl.name === prior)) {{
-        exportCluster.value = prior;
-      }}
+    }});
+    exportClusterAll.addEventListener('change', () => {{
+      const checked = exportClusterAll.checked;
+      exportClusterItems.querySelectorAll('input[type=checkbox]').forEach(cb => {{ cb.checked = checked; }});
+      updateExportLabel();
+    }});
+    exportClusterItems.addEventListener('change', () => {{
+      const all = exportClusterItems.querySelectorAll('input[type=checkbox]');
+      exportClusterAll.checked = [...all].every(cb => cb.checked);
+      updateExportLabel();
+    }});
+
+    function updateExportLabel() {{
+      const selected = selectedClusters();
+      if (selected.length === 0) exportClusterLabel.textContent = 'Select clusters ▾';
+      else if (selected.length === 1) exportClusterLabel.textContent = selected[0] + ' ▾';
+      else exportClusterLabel.textContent = selected.length + ' clusters selected ▾';
     }}
 
-    function currentClusterMembers(clusterName) {{
+    function selectedClusters() {{
+      return [...exportClusterItems.querySelectorAll('input[type=checkbox]:checked')].map(cb => cb.value);
+    }}
+
+    function syncExportOptions(state) {{
+      const prior = selectedClusters();
+      exportClusterItems.innerHTML = '';
+      for (const cl of state.clusters) {{
+        const lbl = document.createElement('label');
+        lbl.className = 'multiselect-item';
+        const cb = document.createElement('input');
+        cb.type = 'checkbox';
+        cb.value = cl.name;
+        if (prior.includes(cl.name)) cb.checked = true;
+        lbl.appendChild(cb);
+        lbl.appendChild(document.createTextNode(`${{cl.name}} (${{cl.genomes}}, ${{cl.pct.toFixed(1)}}%)`));
+        exportClusterItems.appendChild(lbl);
+      }}
+      const all = exportClusterItems.querySelectorAll('input[type=checkbox]');
+      exportClusterAll.checked = all.length > 0 && [...all].every(cb => cb.checked);
+      updateExportLabel();
+    }}
+
+    function currentClusterMembers(clusterNames) {{
       const state = currentState();
+      const nameSet = new Set(clusterNames);
       const ids = [];
       for (let i = 0; i < points.length; i++) {{
-        if (state.point_cluster_names[i] === clusterName) ids.push(points[i].id);
+        if (nameSet.has(state.point_cluster_names[i])) ids.push(points[i].id);
       }}
       return ids;
     }}
 
-    function currentExportCommand(clusterName) {{
+    function currentExportCommand(clusterNames) {{
       const state = currentState();
-      const outStem = `${{state.state_slug}}_${{clusterName}}`;
+      const outStem = `${{state.state_slug}}_${{clusterNames.join('_')}}`;
       return [
         'cd seqscape',
         [
@@ -445,7 +533,7 @@ def html_template(payload_json: str, title: str) -> str:
           `--reference-fasta '${{payload.export_meta.reference_fasta}}'`,
           `--cluster-tsv '${{state.assignments_tsv}}'`,
           '--cluster-column cluster',
-          `--cluster-list '${{clusterName}}'`,
+          `--cluster-list '${{clusterNames.join(',')}}'`,
           `--filename-prefix '${{outStem}}'`,
           `--outdir '${{payload.export_meta.default_export_dir}}'`,
         ].join(' '),
@@ -665,15 +753,17 @@ def html_template(payload_json: str, title: str) -> str:
     minDistSlider.addEventListener('input', syncFromSliders);
     leidenResolutionSlider.addEventListener('input', syncFromSliders);
     exportIdsBtn.addEventListener('click', () => {{
-      const clusterName = exportCluster.value;
+      const clusterNames = selectedClusters();
+      if (clusterNames.length === 0) {{ alert('Select at least one cluster.'); return; }}
       const state = currentState();
-      const ids = currentClusterMembers(clusterName);
-      downloadText(`${{state.state_slug}}_${{clusterName}}_ids.txt`, ids.join('\\n') + '\\n');
+      const ids = currentClusterMembers(clusterNames);
+      downloadText(`${{state.state_slug}}_${{clusterNames.join('_')}}_ids.txt`, ids.join('\\n') + '\\n');
     }});
     exportCmdBtn.addEventListener('click', () => {{
-      const clusterName = exportCluster.value;
+      const clusterNames = selectedClusters();
+      if (clusterNames.length === 0) {{ alert('Select at least one cluster.'); return; }}
       const state = currentState();
-      downloadText(`${{state.state_slug}}_${{clusterName}}_export.sh`, currentExportCommand(clusterName) + '\\n');
+      downloadText(`${{state.state_slug}}_${{clusterNames.join('_')}}_export.sh`, currentExportCommand(clusterNames) + '\\n');
     }});
     nextCmdBtn.addEventListener('click', () => {{
       const state = currentState();

@@ -578,6 +578,80 @@ def html_template(payload_json: str, title: str) -> str:
       padding: 6px 11px;
       font-size: 12px;
     }
+    .exportbar {
+      display: flex;
+      gap: 10px;
+      align-items: flex-end;
+      flex-wrap: wrap;
+      margin: 0 0 14px;
+      padding: 12px 14px;
+      background: white;
+      border: 1px solid #ddd6ca;
+      border-radius: 12px;
+    }
+    .exportbar label {
+      display: block;
+      font-size: 13px;
+      font-weight: 700;
+      margin-bottom: 6px;
+    }
+    .multiselect-wrap {
+      position: relative;
+      min-width: 200px;
+    }
+    .multiselect-toggle {
+      width: 100%;
+      text-align: left;
+      padding: 6px 8px;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+      background: white;
+      cursor: pointer;
+      font-size: 13px;
+    }
+    .multiselect-menu {
+      display: none;
+      position: absolute;
+      z-index: 100;
+      top: 100%;
+      left: 0;
+      min-width: 240px;
+      max-height: 260px;
+      overflow-y: auto;
+      background: white;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+      box-shadow: 0 4px 16px rgba(0,0,0,0.12);
+      padding: 4px 0;
+    }
+    .multiselect-menu.open { display: block; }
+    .multiselect-item, .multiselect-all {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 5px 12px;
+      font-size: 13px;
+      cursor: pointer;
+      user-select: none;
+    }
+    .multiselect-item:hover, .multiselect-all:hover { background: #f5f2ec; }
+    .multiselect-all {
+      border-bottom: 1px solid #eee;
+      font-weight: 700;
+    }
+    .exportbar button {
+      padding: 8px 12px;
+      border: 1px solid #d0c8b9;
+      border-radius: 999px;
+      background: white;
+      cursor: pointer;
+      font-size: 13px;
+    }
+    .exportbar .hint {
+      color: #666;
+      font-size: 12px;
+      padding-bottom: 2px;
+    }
     canvas {
       width: 100%;
       height: auto;
@@ -650,6 +724,23 @@ def html_template(payload_json: str, title: str) -> str:
         </label>
       </div>
     </div>
+    <div class="exportbar">
+      <div>
+        <label>Export Clusters</label>
+        <div class="multiselect-wrap">
+          <button type="button" class="multiselect-toggle" id="review-export-toggle">
+            <span id="review-export-label">Select clusters ▾</span>
+          </button>
+          <div class="multiselect-menu" id="review-export-menu">
+            <label class="multiselect-all"><input type="checkbox" id="review-export-all"> All clusters</label>
+            <div id="review-export-items"></div>
+          </div>
+        </div>
+      </div>
+      <button id="review-export-ids">Download IDs</button>
+      <button id="review-export-cmd">Download FASTA Command</button>
+      <div class="hint">Exports the active clustering scheme at the current threshold.</div>
+    </div>
     <div class="meta" id="meta"></div>
     <div class="metrics" id="metrics"></div>
     <div class="agreement-panel" id="agreement-panel">
@@ -702,6 +793,13 @@ def html_template(payload_json: str, title: str) -> str:
     const afMinDistValue = document.getElementById('af-min-dist-value');
     const minLengthInput = document.getElementById('min-length');
     const maxLengthInput = document.getElementById('max-length');
+    const reviewExportToggle = document.getElementById('review-export-toggle');
+    const reviewExportMenu = document.getElementById('review-export-menu');
+    const reviewExportLabel = document.getElementById('review-export-label');
+    const reviewExportAll = document.getElementById('review-export-all');
+    const reviewExportItems = document.getElementById('review-export-items');
+    const reviewExportIdsBtn = document.getElementById('review-export-ids');
+    const reviewExportCmdBtn = document.getElementById('review-export-cmd');
     const thresholds = payload.thresholds;
     const afStates = payload.af_states || [];
     const defaultAfState = afStates[payload.default_af_state_index || 0] || null;
@@ -1461,6 +1559,137 @@ def html_template(payload_json: str, title: str) -> str:
     afMinDistSlider.addEventListener('input', () => { selectedAfStateId = null; setLegend(); render(); });
     minLengthInput.addEventListener('input', () => { setLegend(); render(); });
     maxLengthInput.addEventListener('input', () => { setLegend(); render(); });
+
+    function downloadText(filename, text) {
+      const blob = new Blob([text], {type: 'text/plain;charset=utf-8'});
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+    }
+    function updateReviewExportLabel() {
+      const sel = selectedReviewClusters();
+      if (sel.length === 0) reviewExportLabel.textContent = 'Select clusters ▾';
+      else if (sel.length === 1) reviewExportLabel.textContent = sel[0] + ' ▾';
+      else reviewExportLabel.textContent = sel.length + ' clusters selected ▾';
+    }
+    function selectedReviewClusters() {
+      return [...reviewExportItems.querySelectorAll('input[type=checkbox]:checked')].map(cb => cb.value);
+    }
+    function syncReviewExportOptions() {
+      const prior = selectedReviewClusters();
+      reviewExportItems.innerHTML = '';
+      const clusterSet = new Set();
+      payload.points.forEach(p => {
+        const c = pointCluster(p);
+        if (c != null) clusterSet.add(String(c));
+      });
+      const clusterNames = Array.from(clusterSet).sort((a, b) => {
+        const na = a.match(/\d+/), nb = b.match(/\d+/);
+        if (na && nb) return Number(na[0]) - Number(nb[0]);
+        return a.localeCompare(b);
+      });
+      clusterNames.forEach(name => {
+        const lbl = document.createElement('label');
+        lbl.className = 'multiselect-item';
+        const cb = document.createElement('input');
+        cb.type = 'checkbox';
+        cb.value = name;
+        if (prior.includes(name)) cb.checked = true;
+        lbl.appendChild(cb);
+        const count = payload.points.filter(p => String(pointCluster(p)) === name).length;
+        lbl.appendChild(document.createTextNode(name + ' (' + count + ')'));
+        reviewExportItems.appendChild(lbl);
+      });
+      const all = reviewExportItems.querySelectorAll('input[type=checkbox]');
+      reviewExportAll.checked = all.length > 0 && [...all].every(cb => cb.checked);
+      updateReviewExportLabel();
+    }
+    function currentReviewClusterMembers(clusterNames) {
+      const nameSet = new Set(clusterNames);
+      return payload.points
+        .filter(p => nameSet.has(String(pointCluster(p))))
+        .map(p => p.id);
+    }
+    function currentReviewExportCommand(clusterNames) {
+      const em = payload.export_meta;
+      const thresh = currentThreshold();
+      const treeThresh = currentTreeThreshold();
+      const joinedNames = clusterNames.join('_');
+      const outDir = em.default_export_dir;
+      if (scheme === 'agglomerative') {
+        return [
+          'cd seqscape',
+          [
+            'PYTHONPATH=src python -m seqscape.cli export-clusters',
+            "--sequence-fasta '" + em.panel_fasta + "'",
+            "--cluster-tsv '" + em.agglomerative_tsv + "'",
+            '--cluster-column agglomerative_cluster',
+            '--filter-column threshold',
+            "--filter-value '" + thresh + "'",
+            "--cluster-list '" + clusterNames.join(',') + "'",
+            "--filename-prefix 'agg_" + thresh + '_' + joinedNames + "'",
+            "--outdir '" + outDir + "'",
+          ].join(' '),
+        ].join('\n');
+      }
+      if (scheme === 'tree_cluster') {
+        return [
+          'cd seqscape',
+          [
+            'PYTHONPATH=src python -m seqscape.cli export-clusters',
+            "--sequence-fasta '" + em.panel_fasta + "'",
+            "--cluster-tsv '" + em.tree_tsv + "'",
+            '--cluster-column tree_cluster',
+            '--filter-column threshold',
+            "--filter-value '" + treeThresh + "'",
+            "--cluster-list '" + clusterNames.join(',') + "'",
+            "--filename-prefix 'tree_" + treeThresh + '_' + joinedNames + "'",
+            "--outdir '" + outDir + "'",
+          ].join(' '),
+        ].join('\n');
+      }
+      return null;
+    }
+    reviewExportToggle.addEventListener('click', () => {
+      syncReviewExportOptions();
+      reviewExportMenu.classList.toggle('open');
+    });
+    document.addEventListener('click', evt => {
+      if (!reviewExportToggle.contains(evt.target) && !reviewExportMenu.contains(evt.target)) {
+        reviewExportMenu.classList.remove('open');
+      }
+    });
+    reviewExportAll.addEventListener('change', () => {
+      const checked = reviewExportAll.checked;
+      reviewExportItems.querySelectorAll('input[type=checkbox]').forEach(cb => { cb.checked = checked; });
+      updateReviewExportLabel();
+    });
+    reviewExportItems.addEventListener('change', () => {
+      const all = reviewExportItems.querySelectorAll('input[type=checkbox]');
+      reviewExportAll.checked = [...all].every(cb => cb.checked);
+      updateReviewExportLabel();
+    });
+    reviewExportIdsBtn.addEventListener('click', () => {
+      const names = selectedReviewClusters();
+      if (names.length === 0) { alert('Select at least one cluster.'); return; }
+      const ids = currentReviewClusterMembers(names);
+      const tag = scheme === 'tree_cluster' ? ('tree_' + currentTreeThreshold()) : (scheme === 'agglomerative' ? ('agg_' + currentThreshold()) : 'leiden');
+      downloadText(tag + '_' + names.join('_') + '_ids.txt', ids.join('\n') + '\n');
+    });
+    reviewExportCmdBtn.addEventListener('click', () => {
+      const names = selectedReviewClusters();
+      if (names.length === 0) { alert('Select at least one cluster.'); return; }
+      const cmd = currentReviewExportCommand(names);
+      if (!cmd) { alert('Command export is only available for Agglomerative and Tree clustering schemes.'); return; }
+      const tag = scheme === 'tree_cluster' ? ('tree_' + currentTreeThreshold()) : ('agg_' + currentThreshold());
+      downloadText(tag + '_' + names.join('_') + '_export.sh', cmd + '\n');
+    });
+
     setLegend();
     render();
   </script>
@@ -1808,6 +2037,12 @@ def run(args) -> None:
 
     payload = {
         "thresholds": [str(x) for x in thresholds],
+        "export_meta": {
+            "panel_fasta": str(Path(args.panel_fasta).resolve()),
+            "agglomerative_tsv": str(outdir / "agglomerative_threshold_assignments.tsv"),
+            "tree_tsv": str(outdir / "tree_threshold_assignments.tsv"),
+            "default_export_dir": str(outdir / "exports"),
+        },
         "default_threshold_index": min(len(thresholds) - 1, thresholds.index(0.06) if 0.06 in thresholds else 0),
         "novel_threshold": args.novel_threshold,
         "pcoa_axis_labels": {
