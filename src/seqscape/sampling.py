@@ -9,7 +9,7 @@ import numpy as np
 from Bio.Seq import Seq
 from Bio.SeqRecord import SeqRecord
 
-from .af_widget import format_resolution
+from .umap_explorer import format_resolution
 from .io_utils import load_fasta_records, read_assignments, read_coords, write_fasta, write_tsv
 from .validation import compression_ratio, full_pairwise_count, panel_fraction_pct, pearson_cluster_proportion_preservation
 
@@ -119,12 +119,12 @@ def run(args) -> None:
         f"k{args.chosen_kmer}_n{args.chosen_neighbors}_d{str(args.chosen_min_dist).replace('.', 'p')}"
         f"_r{format_resolution(args.chosen_leiden_resolution)}"
     )
-    state_dir = Path(args.af_widget_dir).resolve() / "states" / chosen_slug
+    state_dir = Path(args.umap_explorer_dir).resolve() / "states" / chosen_slug
     assignments_tsv = state_dir / "assignments.tsv"
     coords_csv = state_dir / "coords.csv"
     if not assignments_tsv.is_file() or not coords_csv.is_file():
         legacy_slug = f"k{args.chosen_kmer}_n{args.chosen_neighbors}_d{str(args.chosen_min_dist).replace('.', 'p')}"
-        legacy_state_dir = Path(args.af_widget_dir).resolve() / "states" / legacy_slug
+        legacy_state_dir = Path(args.umap_explorer_dir).resolve() / "states" / legacy_slug
         legacy_assignments = legacy_state_dir / "assignments.tsv"
         legacy_coords = legacy_state_dir / "coords.csv"
         if legacy_assignments.is_file() and legacy_coords.is_file():
@@ -184,7 +184,7 @@ def run(args) -> None:
     with summary_txt.open("w") as fh:
         fh.write(f"input_fasta\t{Path(args.input_fasta).resolve()}\n")
         fh.write(f"reference_fasta\t{Path(args.reference_fasta).resolve()}\n")
-        fh.write(f"af_widget_dir\t{Path(args.af_widget_dir).resolve()}\n")
+        fh.write(f"umap_explorer_dir\t{Path(args.umap_explorer_dir).resolve()}\n")
         fh.write(f"chosen_state\t{chosen_slug}\n")
         fh.write(f"sample_size\t{args.sample_size}\n")
         fh.write(f"references_retained\t{len(selected_refs)}\n")

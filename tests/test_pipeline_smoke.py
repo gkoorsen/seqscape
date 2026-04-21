@@ -34,7 +34,7 @@ def _write_fasta(path: Path, records: list[tuple[str, str, str]]) -> None:
 @unittest.skipUnless(_has_af_stack(), "AF stack not installed")
 class PipelineSmokeTests(unittest.TestCase):
     def test_synthetic_pipeline(self) -> None:
-        from seqscape import af_widget, align_panel, review_widget, sampling
+        from seqscape import umap_explorer, align_panel, distance_explorer, sampling
 
         with tempfile.TemporaryDirectory(prefix="seqscape_test_") as td:
             root = Path(td)
@@ -64,7 +64,7 @@ class PipelineSmokeTests(unittest.TestCase):
                 ],
             )
 
-            af_widget.run(
+            umap_explorer.run(
                 Namespace(
                     input_fasta=str(genome_fa),
                     reference_fasta=str(ref_fa),
@@ -86,7 +86,7 @@ class PipelineSmokeTests(unittest.TestCase):
                     outdir=str(af_out),
                 )
             )
-            self.assertTrue((af_out / "af_leiden_parameter_widget.html").is_file())
+            self.assertTrue((af_out / "umap_explorer.html").is_file())
             self.assertTrue((af_out / "states" / "k3_n3_d0p3_r1e-02" / "assignments.tsv").is_file())
             self.assertTrue((af_out / "states" / "k3_n3_d0p3_r1e-02" / "validation_metrics.json").is_file())
 
@@ -94,7 +94,7 @@ class PipelineSmokeTests(unittest.TestCase):
                 Namespace(
                     input_fasta=str(genome_fa),
                     reference_fasta=str(ref_fa),
-                    af_widget_dir=str(af_out),
+                    umap_explorer_dir=str(af_out),
                     chosen_kmer=3,
                     chosen_neighbors=3,
                     chosen_min_dist=0.3,
@@ -126,12 +126,13 @@ class PipelineSmokeTests(unittest.TestCase):
             self.assertTrue((align_out / "summary.txt").is_file())
             self.assertTrue((align_out / "validation_metrics.json").is_file())
 
-            review_widget.run(
+            distance_explorer.run(
                 Namespace(
                     panel_fasta=str(panel_out / "representative_panel.fasta"),
                     identity_matrix=str(align_out / "matrix_identity.tsv"),
                     distance_matrix=str(align_out / "matrix_distance.tsv"),
                     manifest_tsv=str(panel_out / "representative_panel_manifest.tsv"),
+                    umap_explorer_dir="",
                     thresholds="0.05,0.10",
                     novel_threshold=92.0,
                     umap_neighbors=3,
@@ -141,7 +142,7 @@ class PipelineSmokeTests(unittest.TestCase):
                     outdir=str(review_out),
                 )
             )
-            self.assertTrue((review_out / "panel_review_widget.html").is_file())
+            self.assertTrue((review_out / "distance_explorer.html").is_file())
             self.assertTrue((review_out / "heatmap_genome_x_reference.html").is_file())
             self.assertTrue((review_out / "heatmap_panel_square.html").is_file())
             self.assertTrue((review_out / "summary.txt").is_file())

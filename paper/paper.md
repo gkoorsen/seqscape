@@ -20,7 +20,7 @@ bibliography: paper.bib
 
 # Summary
 
-SeqScape is a staged software workflow for exploring large sequence collections in alignment-free sequence space, selecting representative subsets for tractable downstream analysis, and reviewing the resulting alignment-based structure in interactive visualizations. The software provides four connected stages: `af-widget`, `sample-panel`, `align-panel`, and `review-widget`. Together, these stages support a pragmatic analysis path in which large sequence collections are first organized in alignment-free space, then sampled proportionally, then validated and interpreted using pairwise identity matrices, ordination, agglomerative clustering, and reference-space summaries. The workflow combines UMAP-based embedding [@mcinnes2018umap], Leiden clustering [@traag2019leiden], pairwise sequence identity estimation using Biopython [@cock2009biopython] or external aligners such as MUSCLE [@edgar2004muscle] and MAFFT [@katoh2013mafft], and interactive HTML review outputs. The workflow was developed in the context of viral genomics, but is intentionally general enough to support other compact sequence collections such as genes, ORFs, or similar homologous sequence sets.
+SeqScape is a staged software workflow for exploring large sequence collections in alignment-free sequence space, selecting representative subsets for tractable downstream analysis, and reviewing the resulting alignment-based structure in interactive visualizations. The software provides four connected stages: `umap-explorer`, `sample-panel`, `align-panel`, and `distance-explorer`. Together, these stages support a pragmatic analysis path in which large sequence collections are first organized in alignment-free space, then sampled proportionally, then validated and interpreted using pairwise identity matrices, ordination, agglomerative clustering, and reference-space summaries. The workflow combines UMAP-based embedding [@mcinnes2018umap], Leiden clustering [@traag2019leiden], pairwise sequence identity estimation using Biopython [@cock2009biopython] or external aligners such as MUSCLE [@edgar2004muscle] and MAFFT [@katoh2013mafft], and interactive HTML review outputs. The workflow was developed in the context of viral genomics, but is intentionally general enough to support other compact sequence collections such as genes, ORFs, or similar homologous sequence sets.
 
 # Statement of need
 
@@ -42,7 +42,7 @@ SeqScape provides four connected stages.
 
 ## 1. Alignment-free sequence-space widget
 
-The `af-widget` stage builds an interactive alignment-free parameter explorer over genomes plus a reference panel. Sequences are represented in k-mer space, embedded with UMAP [@mcinnes2018umap], and clustered with Leiden [@traag2019leiden]. Multiple parameter states can be precomputed and compared through a single HTML widget.
+The `umap-explorer` stage builds an interactive alignment-free parameter explorer over genomes plus a reference panel. Sequences are represented in k-mer space, embedded with UMAP [@mcinnes2018umap], and clustered with Leiden [@traag2019leiden]. Multiple parameter states can be precomputed and compared through a single HTML widget.
 
 ## 2. Representative panel sampling
 
@@ -54,7 +54,7 @@ The `align-panel` stage computes pairwise identity and distance matrices for the
 
 ## 4. Post-alignment review widget
 
-The `review-widget` stage builds an interactive review bundle from the sampled panel and its pairwise identity or distance matrices. Views include PCoA, alignment-distance UMAP, agglomerative clustering with threshold controls, best-versus-second-best reference identity, and heatmaps for genome-versus-reference and full panel similarity.
+The `distance-explorer` stage builds an interactive review bundle from the sampled panel and its pairwise identity or distance matrices. Views include PCoA, alignment-distance UMAP, agglomerative clustering with threshold controls, best-versus-second-best reference identity, and heatmaps for genome-versus-reference and full panel similarity.
 
 # Availability
 

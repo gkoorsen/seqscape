@@ -11,10 +11,10 @@ Repository:
 
 - package CLI implemented in [src/seqscape](/Users/gerritkoorsen/ciderseq-mono/cideseq-mono/seqscape/src/seqscape)
 - four pipeline stages available:
-  - `af-widget`
+  - `umap-explorer`
   - `sample-panel`
   - `align-panel`
-  - `review-widget`
+  - `distance-explorer`
 - auxiliary export command available:
   - `export-clusters`
 - package test suite present
@@ -54,10 +54,10 @@ python sequence_space_pipeline.py --help
 
 ## Workflow
 
-1. `af-widget`
+1. `umap-explorer`
 2. `sample-panel`
 3. `align-panel`
-4. `review-widget`
+4. `distance-explorer`
 
 Auxiliary command:
 - `export-clusters`

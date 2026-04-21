@@ -6,13 +6,13 @@ import argparse
 def parse_args() -> argparse.Namespace:
     ap = argparse.ArgumentParser(
         description=(
-            "Staged SeqScape pipeline: build AF Leiden widget, sample a representative "
-            "panel, compute pairwise alignments, then build the post-alignment review bundle."
+            "Staged SeqScape pipeline: build the UMAP Explorer, sample a representative "
+            "panel, compute pairwise alignments, then build the Distance Explorer."
         )
     )
     sub = ap.add_subparsers(dest="cmd", required=True)
 
-    ap_af = sub.add_parser("af-widget", help="Build the AF UMAP+Leiden parameter widget")
+    ap_af = sub.add_parser("umap-explorer", help="Build the alignment-free UMAP+Leiden parameter explorer")
     ap_af.add_argument("--input-fasta", required=True)
     ap_af.add_argument("--reference-fasta", required=True)
     ap_af.add_argument("--cg-map-tsv", default="")
@@ -32,10 +32,10 @@ def parse_args() -> argparse.Namespace:
     ap_af.add_argument("--validation-neighbors", default="10,30,100")
     ap_af.add_argument("--outdir", required=True)
 
-    ap_sample = sub.add_parser("sample-panel", help="Sample a proportional representative panel from a chosen AF state")
+    ap_sample = sub.add_parser("sample-panel", help="Sample a proportional representative panel from a chosen UMAP Explorer state")
     ap_sample.add_argument("--input-fasta", required=True)
     ap_sample.add_argument("--reference-fasta", required=True)
-    ap_sample.add_argument("--af-widget-dir", required=True)
+    ap_sample.add_argument("--umap-explorer-dir", required=True)
     ap_sample.add_argument("--chosen-kmer", type=int, required=True)
     ap_sample.add_argument("--chosen-neighbors", type=int, required=True)
     ap_sample.add_argument("--chosen-min-dist", type=float, required=True)
@@ -53,12 +53,12 @@ def parse_args() -> argparse.Namespace:
     ap_align.add_argument("--progress-every", type=int, default=500)
     ap_align.add_argument("--outdir", required=True)
 
-    ap_review = sub.add_parser("review-widget", help="Build the post-alignment threshold explorer, reference scatter, and heatmaps")
+    ap_review = sub.add_parser("distance-explorer", help="Build the post-alignment distance explorer with threshold clustering, reference scatter, and heatmaps")
     ap_review.add_argument("--panel-fasta", required=True)
     ap_review.add_argument("--identity-matrix", required=True)
     ap_review.add_argument("--distance-matrix", required=True)
     ap_review.add_argument("--manifest-tsv", required=True)
-    ap_review.add_argument("--af-widget-dir", default="")
+    ap_review.add_argument("--umap-explorer-dir", default="")
     ap_review.add_argument("--thresholds", default="0.03,0.04,0.05,0.06,0.07,0.08,0.10")
     ap_review.add_argument("--novel-threshold", type=float, default=92.0)
     ap_review.add_argument("--umap-neighbors", type=int, default=30)
@@ -84,10 +84,10 @@ def parse_args() -> argparse.Namespace:
 
 def main() -> None:
     args = parse_args()
-    if args.cmd == "af-widget":
-        from . import af_widget
+    if args.cmd == "umap-explorer":
+        from . import umap_explorer
 
-        af_widget.run(args)
+        umap_explorer.run(args)
     elif args.cmd == "sample-panel":
         from . import sampling
 
@@ -96,10 +96,10 @@ def main() -> None:
         from . import align_panel
 
         align_panel.run(args)
-    elif args.cmd == "review-widget":
-        from . import review_widget
+    elif args.cmd == "distance-explorer":
+        from . import distance_explorer
 
-        review_widget.run(args)
+        distance_explorer.run(args)
     elif args.cmd == "export-clusters":
         from . import export_clusters
 

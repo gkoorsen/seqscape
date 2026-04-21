@@ -6,10 +6,10 @@ SeqScape is under active development as a publication-facing extraction from the
 
 Contributions should stay aligned with the four-stage SeqScape workflow:
 
-1. `af-widget`
+1. `umap-explorer`
 2. `sample-panel`
 3. `align-panel`
-4. `review-widget`
+4. `distance-explorer`
 
 Avoid adding exploratory one-off analyses or unrelated legacy workflows to this package.
 
@@ -45,7 +45,7 @@ When reporting a problem, include:
 - environment details
 - input sizes
 - exact error output
-- whether the issue occurs in `af-widget`, `sample-panel`, `align-panel`, or `review-widget`
+- whether the issue occurs in `umap-explorer`, `sample-panel`, `align-panel`, or `distance-explorer`
 
 GitHub issue templates are available in:
 - `.github/ISSUE_TEMPLATE/bug_report.md`

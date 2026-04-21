@@ -14,10 +14,10 @@ Describe the problem clearly and concretely.
 
 Which stage failed?
 
-- `af-widget`
+- `umap-explorer`
 - `sample-panel`
 - `align-panel`
-- `review-widget`
+- `distance-explorer`
 - other
 
 ## Command

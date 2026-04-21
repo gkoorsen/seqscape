@@ -2,11 +2,11 @@
 
 This is the minimal staged workflow for SeqScape.
 
-## 1. Build the AF widget
+## 1. Build the UMAP Explorer
 
 ```bash
 cd seqscape
-PYTHONPATH=src python -m seqscape.cli af-widget \
+PYTHONPATH=src python -m seqscape.cli umap-explorer \
   --input-fasta path/to/phased_filtered.fasta \
   --reference-fasta path/to/reference_panel.fasta \
   --kmer-values 5 \
@@ -22,7 +22,7 @@ cd seqscape
 PYTHONPATH=src python -m seqscape.cli sample-panel \
   --input-fasta path/to/phased_filtered.fasta \
   --reference-fasta path/to/reference_panel.fasta \
-  --af-widget-dir runs/example_af \
+  --umap-explorer-dir runs/example_af \
   --chosen-kmer 5 \
   --chosen-neighbors 100 \
   --chosen-min-dist 0.3 \
@@ -42,11 +42,11 @@ PYTHONPATH=src python -m seqscape.cli align-panel \
   --outdir runs/example_aligned
 ```
 
-## 4. Build the review widget
+## 4. Build the Distance Explorer
 
 ```bash
 cd seqscape
-PYTHONPATH=src python -m seqscape.cli review-widget \
+PYTHONPATH=src python -m seqscape.cli distance-explorer \
   --panel-fasta runs/example_aligned/representative_panel.fasta \
   --identity-matrix runs/example_aligned/matrix_identity.tsv \
   --distance-matrix runs/example_aligned/matrix_distance.tsv \
@@ -57,6 +57,6 @@ PYTHONPATH=src python -m seqscape.cli review-widget \
 
 ## Notes
 
-- `af-widget` and `review-widget` require the UMAP/Leiden stack
+- `umap-explorer` and `distance-explorer` require the UMAP/Leiden stack
 - `align-panel` can run with `muscle`, `mafft`, or `pairwisealigner`
 - the repository test suite includes a synthetic end-to-end smoke run

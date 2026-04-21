@@ -2,10 +2,10 @@
 
 SeqScape exposes a four-stage workflow:
 
-1. `af-widget`
+1. `umap-explorer`
 2. `sample-panel`
 3. `align-panel`
-4. `review-widget`
+4. `distance-explorer`
 
 Auxiliary command:
 
@@ -13,18 +13,18 @@ Auxiliary command:
 
 `export-clusters` is not a required stage in the main pipeline. It is a reusable export utility that can write one FASTA per cluster from:
 
-- a full-set AF Leiden state `assignments.tsv`
+- a full-set UMAP Explorer Leiden state `assignments.tsv`
 - a sampled-panel `representative_panel_manifest.tsv` using `source_cluster`
-- a review-stage `agglomerative_threshold_assignments.tsv` filtered to a chosen threshold
+- a Distance Explorer `agglomerative_threshold_assignments.tsv` filtered to a chosen threshold
 
 Typical usage patterns:
 
-- Full AF Leiden clusters:
+- Full UMAP Explorer Leiden clusters:
 ```bash
 PYTHONPATH=src python -m seqscape.cli export-clusters \
   --sequence-fasta genomes.fasta \
   --reference-fasta refs.fasta \
-  --cluster-tsv af_widget/states/k5_n100_d0p3/assignments.tsv \
+  --cluster-tsv umap_explorer/states/k5_n100_d0p3/assignments.tsv \
   --cluster-column cluster \
   --filename-prefix leiden_full \
   --outdir exports/full_leiden

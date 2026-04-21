@@ -22,10 +22,10 @@ Describe the interface, behavior, or output you want.
 
 Which part of SeqScape does this affect?
 
-- `af-widget`
+- `umap-explorer`
 - `sample-panel`
 - `align-panel`
-- `review-widget`
+- `distance-explorer`
 - documentation
 - testing
 - packaging
