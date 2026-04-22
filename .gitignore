@@ -11,3 +11,9 @@ build/
 *.svg
 *.tsv
 *.csv
+
+# Example-case-study data and run outputs are reproducible from the fetch
+# scripts and should not be tracked.
+examples/*/data/
+examples/*/runs/
+examples/*/*.log
