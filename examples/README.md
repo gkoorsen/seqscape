@@ -21,12 +21,24 @@ Each case-study directory contains:
 - auxiliary scripts for genotype assignment and comparison against the
   anchor taxonomy
 
+## Tracked output widgets
+
+The norovirus VP1 example includes selected rendered HTML outputs for quick
+inspection without rerunning the full workflow:
+
+- [AF Leiden parameter widget](norovirus_vp1/runs/af/af_leiden_parameter_widget.html)
+- [Panel review widget](norovirus_vp1/runs/review/panel_review_widget.html)
+- [Panel square heatmap](norovirus_vp1/runs/review/heatmap_panel_square.html)
+- [Genome x reference heatmap](norovirus_vp1/runs/review/heatmap_genome_x_reference.html)
+- [Chhabra 302 panel review widget](norovirus_vp1/runs/chhabra302/review/panel_review_widget.html)
+- [Chhabra 302 panel square heatmap](norovirus_vp1/runs/chhabra302/review/heatmap_panel_square.html)
+
 ## Reproduction
 
-The `data/` and `runs/` directories are **not** tracked in the repository —
-the input FASTA pools (~4,700 norovirus and ~15,700 begomovirus sequences)
-are regenerated directly from NCBI Entrez so that the examples always
-reflect the current GenBank state rather than a frozen snapshot. To
+The `data/` directories and most `runs/` outputs are **not** tracked in the
+repository — the input FASTA pools (~4,700 norovirus and ~15,700 begomovirus
+sequences) are regenerated directly from NCBI Entrez so that the examples
+always reflect the current GenBank state rather than a frozen snapshot. To
 reproduce a case study end-to-end:
 
 ```bash
