@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.1.2
+
+Added:
+- tracked norovirus VP1 example HTML outputs
+- direct links to the norovirus VP1 output widgets from `examples/README.md`
+- updated citation metadata for the Zenodo `v0.1.2` archive
+
 ## 0.1.0
 
 Initial publication-facing extraction of SeqScape.

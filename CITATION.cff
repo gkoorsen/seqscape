@@ -1,10 +1,15 @@
 cff-version: 1.2.0
-message: "If you use SeqScape, please cite the software metadata below. Update this file with the release DOI before JOSS submission."
+message: "If you use SeqScape, please cite the software metadata below."
 title: "SeqScape"
 type: software
-version: 0.1.0
+version: "0.1.2"
+date-released: "2026-04-23"
 url: "https://github.com/gkoorsen/seqscape"
 repository-code: "https://github.com/gkoorsen/seqscape"
+identifiers:
+  - type: doi
+    value: "10.5281/zenodo.19708107"
+    description: "Zenodo archive for SeqScape v0.1.2"
 authors:
   - family-names: "Koorsen"
     given-names: "Gerrit"
