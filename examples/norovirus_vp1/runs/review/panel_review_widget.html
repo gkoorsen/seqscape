@@ -341,6 +341,7 @@
       </div>
       <button id="review-export-ids">Download IDs</button>
       <button id="review-export-cmd">Download FASTA Command</button>
+      <button id="review-export-png">Download PNG</button>
       <div class="hint">Exports the active clustering scheme at the current threshold.</div>
     </div>
     <div class="meta" id="meta"></div>
@@ -402,6 +403,7 @@
     const reviewExportItems = document.getElementById('review-export-items');
     const reviewExportIdsBtn = document.getElementById('review-export-ids');
     const reviewExportCmdBtn = document.getElementById('review-export-cmd');
+    const reviewExportPngBtn = document.getElementById('review-export-png');
     const thresholds = payload.thresholds;
     const afStates = payload.af_states || [];
     const defaultAfState = afStates[payload.default_af_state_index || 0] || null;
@@ -1173,6 +1175,129 @@
       a.remove();
       URL.revokeObjectURL(url);
     }
+
+    function downloadBlob(filename, blob) {
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      setTimeout(() => URL.revokeObjectURL(url), 1000);
+    }
+
+    function sanitizeFilename(value) {
+      return String(value || 'export').replace(/[^A-Za-z0-9._-]+/g, '_').replace(/^_+|_+$/g, '');
+    }
+
+    function downloadCanvasPng(canvasEl, filename) {
+      if (canvasEl.toBlob) {
+        canvasEl.toBlob(blob => {
+          if (!blob) return;
+          downloadBlob(filename, blob);
+        }, 'image/png');
+        return;
+      }
+      const a = document.createElement('a');
+      a.href = canvasEl.toDataURL('image/png');
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+    }
+
+    function inlineComputedStyles(source, target) {
+      if (!(source instanceof Element) || !(target instanceof Element)) return;
+      const style = window.getComputedStyle(source);
+      let cssText = '';
+      for (let i = 0; i < style.length; i++) {
+        const name = style[i];
+        cssText += `${name}:${style.getPropertyValue(name)};`;
+      }
+      target.setAttribute('style', cssText);
+      if (source instanceof HTMLCanvasElement && target instanceof HTMLCanvasElement) {
+        target.width = source.width;
+        target.height = source.height;
+        const targetCtx = target.getContext('2d');
+        if (targetCtx) targetCtx.drawImage(source, 0, 0);
+      }
+      const sourceChildren = Array.from(source.children || []);
+      const targetChildren = Array.from(target.children || []);
+      for (let i = 0; i < sourceChildren.length; i++) {
+        inlineComputedStyles(sourceChildren[i], targetChildren[i]);
+      }
+    }
+
+    async function downloadElementPng(element, filename) {
+      const rect = element.getBoundingClientRect();
+      const width = Math.max(1, Math.ceil(Math.max(element.scrollWidth, rect.width)));
+      const height = Math.max(1, Math.ceil(Math.max(element.scrollHeight, rect.height)));
+      const clone = element.cloneNode(true);
+      inlineComputedStyles(element, clone);
+      clone.style.width = `${width}px`;
+      clone.style.maxHeight = 'none';
+      clone.style.overflow = 'visible';
+      clone.style.margin = '0';
+      clone.style.background = '#ffffff';
+
+      const wrapper = document.createElement('div');
+      wrapper.setAttribute('xmlns', 'http://www.w3.org/1999/xhtml');
+      wrapper.style.width = `${width}px`;
+      wrapper.style.height = `${height}px`;
+      wrapper.style.margin = '0';
+      wrapper.style.padding = '0';
+      wrapper.style.background = '#ffffff';
+      wrapper.style.display = 'inline-block';
+      wrapper.appendChild(clone);
+
+      const markup = new XMLSerializer().serializeToString(wrapper);
+      const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}" viewBox="0 0 ${width} ${height}"><foreignObject width="100%" height="100%">${markup}</foreignObject></svg>`;
+      const svgBlob = new Blob([svg], {type: 'image/svg+xml;charset=utf-8'});
+      const url = URL.createObjectURL(svgBlob);
+      try {
+        const image = await new Promise((resolve, reject) => {
+          const img = new Image();
+          img.onload = () => resolve(img);
+          img.onerror = () => reject(new Error('Could not render HTML view for PNG export.'));
+          img.src = url;
+        });
+        const exportCanvas = document.createElement('canvas');
+        exportCanvas.width = width * 2;
+        exportCanvas.height = height * 2;
+        const exportCtx = exportCanvas.getContext('2d');
+        if (!exportCtx) throw new Error('Could not create PNG export canvas.');
+        exportCtx.scale(2, 2);
+        exportCtx.fillStyle = '#ffffff';
+        exportCtx.fillRect(0, 0, width, height);
+        exportCtx.drawImage(image, 0, 0);
+        downloadCanvasPng(exportCanvas, filename);
+      } finally {
+        URL.revokeObjectURL(url);
+      }
+    }
+
+    function currentPngFilename() {
+      const parts = ['panel_review'];
+      parts.push(agreementVisible ? `agreement_${agreementTarget}` : mode);
+      parts.push(scheme);
+      if (scheme === 'agglomerative') parts.push(`agg_${currentThreshold()}`);
+      if (scheme === 'tree_cluster') parts.push(`tree_${currentTreeThreshold()}`);
+      const state = currentAfState();
+      if (state && state.state_id) parts.push(state.state_id);
+      const bounds = currentLengthBounds();
+      parts.push(`len_${bounds.minLen}-${bounds.maxLen}`);
+      return `${sanitizeFilename(parts.join('_'))}.png`;
+    }
+
+    function exportCurrentViewPng() {
+      const filename = currentPngFilename();
+      if (agreementVisible) {
+        return downloadElementPng(agreementPanel, filename);
+      }
+      downloadCanvasPng(canvas, filename);
+      return Promise.resolve();
+    }
     function updateReviewExportLabel() {
       const sel = selectedReviewClusters();
       if (sel.length === 0) reviewExportLabel.textContent = 'Select clusters ▾';
@@ -1237,8 +1362,7 @@
             "--filename-prefix 'agg_" + thresh + '_' + joinedNames + "'",
             "--outdir '" + outDir + "'",
           ].join(' '),
-        ].join('
-');
+        ].join('\n');
       }
       if (scheme === 'tree_cluster') {
         return [
@@ -1254,8 +1378,7 @@
             "--filename-prefix 'tree_" + treeThresh + '_' + joinedNames + "'",
             "--outdir '" + outDir + "'",
           ].join(' '),
-        ].join('
-');
+        ].join('\n');
       }
       return null;
     }
@@ -1283,9 +1406,7 @@
       if (names.length === 0) { alert('Select at least one cluster.'); return; }
       const ids = currentReviewClusterMembers(names);
       const tag = scheme === 'tree_cluster' ? ('tree_' + currentTreeThreshold()) : (scheme === 'agglomerative' ? ('agg_' + currentThreshold()) : 'leiden');
-      downloadText(tag + '_' + names.join('_') + '_ids.txt', ids.join('
-') + '
-');
+      downloadText(tag + '_' + names.join('_') + '_ids.txt', ids.join('\n') + '\n');
     });
     reviewExportCmdBtn.addEventListener('click', () => {
       const names = selectedReviewClusters();
@@ -1293,8 +1414,13 @@
       const cmd = currentReviewExportCommand(names);
       if (!cmd) { alert('Command export is only available for Agglomerative and Tree clustering schemes.'); return; }
       const tag = scheme === 'tree_cluster' ? ('tree_' + currentTreeThreshold()) : ('agg_' + currentThreshold());
-      downloadText(tag + '_' + names.join('_') + '_export.sh', cmd + '
-');
+      downloadText(tag + '_' + names.join('_') + '_export.sh', cmd + '\n');
+    });
+    reviewExportPngBtn.addEventListener('click', () => {
+      exportCurrentViewPng().catch(err => {
+        console.error(err);
+        alert('PNG export failed for the current view.');
+      });
     });
 
     setLegend();

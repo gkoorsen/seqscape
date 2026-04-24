@@ -27,6 +27,7 @@ thead th.corner { left: 0; z-index: 4; }
 <button id='selectAllBtn' type='button'>Select All</button>
 <button id='clearSelectionBtn' type='button'>Clear</button>
 <button id='exportSelectionBtn' type='button'>Export</button>
+<button id='exportPngBtn' type='button'>Export PNG</button>
 <span>selected: <strong id='selectedCount'>0</strong></span>
 </div>
 <div class='wrap'><table>
@@ -520,7 +521,94 @@ thead th.corner { left: 0; z-index: 4; }
 </tbody></table></div>
 <script>
 (function(){
-const qRange=document.getElementById('qcovMinRange'); const qNumber=document.getElementById('qcovMinNumber'); const hideNoPassRows=document.getElementById('hideNoPassRows'); const hideNoPassCols=document.getElementById('hideNoPassCols'); const selectVisibleBtn=document.getElementById('selectVisibleBtn'); const selectAllBtn=document.getElementById('selectAllBtn'); const clearSelectionBtn=document.getElementById('clearSelectionBtn'); const exportSelectionBtn=document.getElementById('exportSelectionBtn'); const toggleNameModeBtn=document.getElementById('toggleNameModeBtn'); const showRefLabels=document.getElementById('showRefLabels'); const selectedCount=document.getElementById('selectedCount'); const rowChecks=Array.from(document.querySelectorAll('.row-select')); const colHeaders=Array.from(document.querySelectorAll('thead th.colhdr')); const colTexts=Array.from(document.querySelectorAll('span.coltxt'));
+const qRange=document.getElementById('qcovMinRange'); const qNumber=document.getElementById('qcovMinNumber'); const hideNoPassRows=document.getElementById('hideNoPassRows'); const hideNoPassCols=document.getElementById('hideNoPassCols'); const selectVisibleBtn=document.getElementById('selectVisibleBtn'); const selectAllBtn=document.getElementById('selectAllBtn'); const clearSelectionBtn=document.getElementById('clearSelectionBtn'); const exportSelectionBtn=document.getElementById('exportSelectionBtn'); const exportPngBtn=document.getElementById('exportPngBtn'); const toggleNameModeBtn=document.getElementById('toggleNameModeBtn'); const showRefLabels=document.getElementById('showRefLabels'); const selectedCount=document.getElementById('selectedCount'); const wrap=document.querySelector('.wrap'); const rowChecks=Array.from(document.querySelectorAll('.row-select')); const colHeaders=Array.from(document.querySelectorAll('thead th.colhdr')); const colTexts=Array.from(document.querySelectorAll('span.coltxt'));
+function downloadBlob(filename, blob){ const url=URL.createObjectURL(blob); const a=document.createElement('a'); a.href=url; a.download=filename; document.body.appendChild(a); a.click(); document.body.removeChild(a); setTimeout(function(){ URL.revokeObjectURL(url); }, 1000); }
+function downloadCanvasPng(canvas, filename){ if(canvas.toBlob){ canvas.toBlob(function(blob){ if(blob) downloadBlob(filename, blob); }, 'image/png'); return; } const a=document.createElement('a'); a.href=canvas.toDataURL('image/png'); a.download=filename; document.body.appendChild(a); a.click(); document.body.removeChild(a); }
+function downloadElementPng(element, filename){
+  const table=element && element.querySelector('table');
+  if(!table || !table.tHead || !table.tBodies.length) return Promise.reject(new Error('No heatmap table found.'));
+  const headerRow=table.tHead.rows[0];
+  const bodyRows=Array.from(table.tBodies[0].rows).filter(function(row){ return row.style.display !== 'none'; });
+  const visibleColIndexes=Array.from(headerRow.cells).map(function(cell, idx){ return cell.style.display !== 'none' ? idx : null; }).filter(function(idx){ return idx !== null; });
+  const firstColWidth=Math.max.apply(null, [Math.ceil(headerRow.cells[0].getBoundingClientRect().width || 0)].concat(bodyRows.map(function(row){ return Math.ceil((row.cells[0] && row.cells[0].getBoundingClientRect().width) || 0); }), [120]));
+  const colWidths=visibleColIndexes.map(function(colIndex, pos){
+    if(pos === 0) return firstColWidth;
+    const headerWidth=Math.ceil(headerRow.cells[colIndex].getBoundingClientRect().width || 0);
+    const bodyWidth=Math.max.apply(null, [0].concat(bodyRows.map(function(row){ const cell=row.cells[colIndex]; return cell && cell.style.display !== 'none' ? Math.ceil(cell.getBoundingClientRect().width || 0) : 0; })));
+    return Math.max(headerWidth, bodyWidth, 28);
+  });
+  const headerHeight=Math.max(60, Math.ceil(headerRow.getBoundingClientRect().height || 190));
+  const rowHeights=bodyRows.map(function(row){ return Math.max(18, Math.ceil(row.getBoundingClientRect().height || 0)); });
+  const width=colWidths.reduce(function(sum, value){ return sum + value; }, 0) + 1;
+  const height=headerHeight + rowHeights.reduce(function(sum, value){ return sum + value; }, 0) + 1;
+  const exportCanvas=document.createElement('canvas');
+  const scale=2;
+  exportCanvas.width=width * scale;
+  exportCanvas.height=height * scale;
+  const ctx=exportCanvas.getContext('2d');
+  if(!ctx) return Promise.reject(new Error('Could not create PNG export canvas.'));
+  ctx.scale(scale, scale);
+  ctx.fillStyle='#ffffff';
+  ctx.fillRect(0, 0, width, height);
+  ctx.textBaseline='middle';
+  let x=0;
+  visibleColIndexes.forEach(function(colIndex, pos){
+    const cell=headerRow.cells[colIndex];
+    const cellWidth=colWidths[pos];
+    const style=window.getComputedStyle(cell);
+    ctx.fillStyle=style.backgroundColor || '#f8fafc';
+    ctx.fillRect(x, 0, cellWidth, headerHeight);
+    ctx.strokeStyle=style.borderTopColor || '#e0e0e0';
+    ctx.strokeRect(x, 0, cellWidth, headerHeight);
+    if(pos === 0){
+      ctx.fillStyle=style.color || '#111111';
+      ctx.font=(style.fontWeight || '400') + ' ' + (style.fontSize || '11px') + ' ' + (style.fontFamily || 'sans-serif');
+      ctx.textAlign='left';
+      ctx.fillText(cell.textContent.trim(), x + 8, headerHeight / 2);
+    } else {
+      const span=cell.querySelector('span');
+      const spanStyle=span ? window.getComputedStyle(span) : style;
+      const label=span ? span.textContent.trim() : cell.textContent.trim();
+      if(label && spanStyle.visibility !== 'hidden'){
+        ctx.save();
+        ctx.translate(x + (cellWidth / 2), headerHeight - 10);
+        ctx.rotate(-Math.PI / 2);
+        ctx.fillStyle=spanStyle.color || style.color || '#111111';
+        ctx.font=(spanStyle.fontWeight || style.fontWeight || '400') + ' ' + (spanStyle.fontSize || style.fontSize || '11px') + ' ' + (spanStyle.fontFamily || style.fontFamily || 'sans-serif');
+        ctx.textAlign='left';
+        ctx.fillText(label, 0, 0);
+        ctx.restore();
+      }
+    }
+    x += cellWidth;
+  });
+  let y=headerHeight;
+  bodyRows.forEach(function(row, rowIndex){
+    const rowHeight=rowHeights[rowIndex];
+    let cellX=0;
+    visibleColIndexes.forEach(function(colIndex, pos){
+      const cell=row.cells[colIndex];
+      const style=window.getComputedStyle(cell);
+      const cellWidth=colWidths[pos];
+      ctx.fillStyle=style.backgroundColor || '#ffffff';
+      ctx.fillRect(cellX, y, cellWidth, rowHeight);
+      ctx.strokeStyle=style.borderTopColor || '#e0e0e0';
+      ctx.strokeRect(cellX, y, cellWidth, rowHeight);
+      const labelCell=pos === 0;
+      const text=labelCell ? (((cell.querySelector('span') && cell.querySelector('span').textContent) || cell.textContent).trim()) : cell.textContent.trim();
+      if(text){
+        ctx.fillStyle=style.color || '#111111';
+        ctx.font=(style.fontWeight || '400') + ' ' + (style.fontSize || '11px') + ' ' + (style.fontFamily || 'sans-serif');
+        ctx.textAlign=labelCell ? 'left' : 'center';
+        ctx.fillText(text, labelCell ? (cellX + 8) : (cellX + (cellWidth / 2)), y + (rowHeight / 2));
+      }
+      cellX += cellWidth;
+    });
+    y += rowHeight;
+  });
+  downloadCanvasPng(exportCanvas, filename);
+  return Promise.resolve();
+}
 function applyNameMode(){ if(!toggleNameModeBtn) return; const mode=toggleNameModeBtn.dataset.mode||'long'; for(const sp of colTexts){ const longName=sp.dataset.long||''; const shortName=sp.dataset.short||longName; sp.textContent=(mode==='short')?shortName:longName; }}
 function isVisibleRowCheckbox(ch){ const tr=ch.closest('tr'); if(!tr) return false; return tr.style.display !== 'none'; }
 function updateSelectedCount(){ if(!selectedCount) return; let n=0; for(const ch of rowChecks) if(ch.checked) n += 1; selectedCount.textContent=String(n); }
@@ -534,6 +622,7 @@ if(selectAllBtn) selectAllBtn.addEventListener('click', function(){ for(const ch
 if(clearSelectionBtn) clearSelectionBtn.addEventListener('click', function(){ for(const ch of rowChecks) ch.checked=false; updateSelectedCount(); });
 for(const ch of rowChecks) ch.addEventListener('change', updateSelectedCount);
 if(exportSelectionBtn) exportSelectionBtn.addEventListener('click', function(){ const names=rowChecks.filter(ch => ch.checked).map(ch => ch.dataset.row || ''); if(!names.length){ alert('No rows selected.'); return; } const blob=new Blob([names.join('\\n') + '\\n'], {type:'text/plain;charset=utf-8'}); const a=document.createElement('a'); const url=URL.createObjectURL(blob); a.href=url; a.download='selected_rows.txt'; document.body.appendChild(a); a.click(); document.body.removeChild(a); setTimeout(function(){ URL.revokeObjectURL(url); }, 1000); });
+if(exportPngBtn && wrap) exportPngBtn.addEventListener('click', function(){ downloadElementPng(wrap, 'heatmap_genome_x_reference_current_view.png').catch(function(err){ console.error(err); alert('PNG export failed for the current view.'); }); });
 applyNameMode(); applyQcovFilter();})();
 </script>
 </body></html>

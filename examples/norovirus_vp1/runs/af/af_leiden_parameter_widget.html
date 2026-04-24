@@ -207,6 +207,7 @@
       <button id="export-ids">Download IDs</button>
       <button id="export-cmd">Download FASTA Command</button>
       <button id="next-cmd">Download Next-Step Command</button>
+      <button id="export-png">Download PNG</button>
       <div class="hint">The command is prefilled for the currently selected state.</div>
     </div>
     <div class="metrics" id="metrics"></div>
@@ -235,6 +236,7 @@
     const exportIdsBtn = document.getElementById('export-ids');
     const exportCmdBtn = document.getElementById('export-cmd');
     const nextCmdBtn = document.getElementById('next-cmd');
+    const exportPngBtn = document.getElementById('export-png');
     const metrics = document.getElementById('metrics');
     const W = plot.width, H = plot.height;
     const M = { left: 72, right: 34, top: 34, bottom: 62 };
@@ -295,6 +297,33 @@
       a.click();
       a.remove();
       URL.revokeObjectURL(url);
+    }
+
+    function downloadBlob(filename, blob) {
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      setTimeout(() => URL.revokeObjectURL(url), 1000);
+    }
+
+    function downloadCanvasPng(canvasEl, filename) {
+      if (canvasEl.toBlob) {
+        canvasEl.toBlob(blob => {
+          if (!blob) return;
+          downloadBlob(filename, blob);
+        }, 'image/png');
+        return;
+      }
+      const a = document.createElement('a');
+      a.href = canvasEl.toDataURL('image/png');
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
     }
 
     function syncExportOptions(state) {
@@ -566,6 +595,11 @@
       const requested = Number(sampleSizeInput.value);
       const sampleSize = Number.isFinite(requested) && requested > 0 ? Math.round(requested) : 500;
       downloadText(`${state.state_slug}_sample_panel_${sampleSize}.sh`, currentSampleCommand() + '\n');
+    });
+    exportPngBtn.addEventListener('click', () => {
+      hideTooltip();
+      const state = currentState();
+      downloadCanvasPng(plot, `af_leiden_${state.state_slug}.png`);
     });
     draw();
   </script>
