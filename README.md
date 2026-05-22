@@ -1,9 +1,7 @@
 # SeqScape
 
-`SeqScape` is a staged workflow for sequence-space exploration, representative sampling, and alignment-based review.
+SeqScape is a Python workflow for exploring large homologous sequence collections, selecting compact representative panels, and reviewing sequence diversity through interactive browser-based visualisations. It combines alignment-free k-mer UMAP embedding and Leiden clustering with proportional representative sampling, then applies pairwise alignment only to the selected panel to produce distance matrices, PCoA plots, neighbour-joining trees, threshold-based clusters, and reference-based novelty screening. This staged design makes alignment-based analysis tractable for viral, gene-scale, and other compact sequence collection where full all-versus-all comparison would be computationally expensive. SeqScape also generates self-contained HTML widgets for parameter exploration and alignment-based review, making results easy to inspect and share without running command-line tools.
 
-Repository:
-- `https://github.com/gkoorsen/seqscape`
 
 ## Current Status
 
