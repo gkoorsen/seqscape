@@ -14,7 +14,7 @@ from .heatmap import maybe_heatmap, write_html_heatmap
 from .io_utils import write_tsv
 from .ordination import pcoa, run_precomputed_umap
 from .palettes import PALETTE
-from .validation import choose_closest_cluster_threshold, nmi, pcoa_variance_explained
+from .validation import ari, choose_closest_cluster_threshold, full_pairwise_count, nmi, pcoa_variance_explained
 
 
 def cluster_sort_key(cid: str) -> tuple:
@@ -802,6 +802,7 @@ def html_template(payload_json: str, title: str) -> str:
     const reviewExportCmdBtn = document.getElementById('review-export-cmd');
     const thresholds = payload.thresholds;
     const afStates = payload.af_states || [];
+    const hasClusterAgreement = (payload.cluster_agreement || []).length > 0;
     const defaultAfState = afStates[payload.default_af_state_index || 0] || null;
     const afKmerValues = Array.from(new Set(afStates.map(s => Number(s.kmer)))).sort((a, b) => a - b);
     const afNeighborsValues = Array.from(new Set(afStates.map(s => Number(s.neighbors)))).sort((a, b) => a - b);
@@ -810,7 +811,7 @@ def html_template(payload_json: str, title: str) -> str:
     thresholdSlider.max = String(thresholds.length - 1);
     thresholdSlider.value = String(payload.default_threshold_index);
     treeThresholdSlider.max = String(thresholds.length - 1);
-    treeThresholdSlider.value = String(payload.default_tree_threshold_index || payload.default_threshold_index);
+    treeThresholdSlider.value = String(payload.default_tree_threshold_index !== undefined ? payload.default_tree_threshold_index : payload.default_threshold_index);
     afKmerSlider.max = String(Math.max(0, afKmerValues.length - 1));
     afNeighborsSlider.max = String(Math.max(0, afNeighborsValues.length - 1));
     afMinDistSlider.max = String(Math.max(0, afMinDistValues.length - 1));
@@ -821,6 +822,10 @@ def html_template(payload_json: str, title: str) -> str:
       afStateWrap.style.display = 'none';
       btnAfUmap.style.display = 'none';
     }
+    if (!hasClusterAgreement) {
+      btnAgreement.style.display = 'none';
+      agreementPanel.style.display = 'none';
+    }
     const allLengths = payload.points.map(p => Number(p.length_bp || 0)).filter(v => Number.isFinite(v) && v > 0);
     const globalMinLength = allLengths.length ? Math.min(...allLengths) : 0;
     const globalMaxLength = allLengths.length ? Math.max(...allLengths) : 0;
@@ -829,7 +834,7 @@ def html_template(payload_json: str, title: str) -> str:
 
     let mode = 'pcoa';
     let referenceBestMode = 'include';
-    let scheme = 'leiden_cluster';
+    let scheme = afStates.length ? 'leiden_cluster' : 'tree_cluster';
     let scaleMode = 'robust';
     let agreementVisible = false;
     let agreementTarget = 'agglomerative';
@@ -1087,33 +1092,94 @@ def html_template(payload_json: str, title: str) -> str:
       const tip = tooltip ? ` title="${tooltip}"` : '';
       return `<div class="metric"${tip}><span class="label">${label}</span><span class="value">${value}</span></div>`;
     }
+    function formatRuntime(seconds) {
+      const value = Number(seconds);
+      if (!Number.isFinite(value)) return 'NA';
+      if (value < 3600) return `${(value / 60).toFixed(1)} min`;
+      return `${(value / 3600).toFixed(2)} h`;
+    }
+    function formatPValue(value) {
+      const p = Number(value);
+      if (!Number.isFinite(p)) return 'NA';
+      if (p === 0) return '<1e-300';
+      if (p < 0.001) return p.toExponential(2).replace('e-', 'e-');
+      return p.toFixed(3);
+    }
+    function sourceGroupCount() {
+      const labels = new Set(payload.points.map(p => p.leiden_cluster).filter(Boolean));
+      return labels.size || null;
+    }
+    function metricsForThreshold(metricMap, threshold) {
+      if (!metricMap) return {};
+      if (metricMap[threshold]) return metricMap[threshold];
+      const numeric = Number(threshold);
+      if (!Number.isFinite(numeric)) return {};
+      const fixed = numeric.toFixed(6);
+      if (metricMap[fixed]) return metricMap[fixed];
+      const matched = Object.keys(metricMap).find(key => Math.abs(Number(key) - numeric) < 1e-9);
+      return matched ? metricMap[matched] : {};
+    }
     function setMetrics() {
       const thr = currentThreshold();
       const treeThr = currentTreeThreshold();
-      const thrMetrics = payload.validation.thresholds[thr] || {};
-      const treeMetrics = payload.validation.tree_thresholds[treeThr] || {};
+      const thrMetrics = metricsForThreshold(payload.validation.thresholds, thr);
+      const treeMetrics = metricsForThreshold(payload.validation.tree_thresholds, treeThr);
+      const sourceThrMetrics = metricsForThreshold(payload.validation.source_thresholds, thr);
+      const sourceTreeMetrics = metricsForThreshold(payload.validation.source_tree_thresholds, treeThr);
       const sample = payload.validation.sample || {};
       const align = payload.validation.align || {};
       const review = payload.validation.review || {};
       const afState = currentAfState();
+      const showSourceValidation = !afState && (
+        sourceThrMetrics.cluster_count !== undefined || sourceTreeMetrics.cluster_count !== undefined
+      );
+      const displayThrMetrics = showSourceValidation ? sourceThrMetrics : thrMetrics;
+      const displayTreeMetrics = showSourceValidation ? sourceTreeMetrics : treeMetrics;
+      const activeMetrics = scheme === 'tree_cluster' ? displayTreeMetrics : displayThrMetrics;
+      const activeMetricPrefix = scheme === 'tree_cluster' ? 'Tree' : 'Agg';
       const visibleNovelGenomes = filteredPoints().filter(p =>
         p.item_class === 'genome' && Number(p.best_identity) < currentNovelThreshold()
       ).length;
       const minLineageSize = (sample.N && sample.sample_size_total)
         ? Math.ceil(sample.N / sample.sample_size_total) : null;
-      metrics.innerHTML = [
-        metricCard('Panel Fraction', sample.panel_fraction_pct !== undefined ? `${sample.panel_fraction_pct.toFixed(2)}%` : 'NA'),
-        metricCard('Min Lineage Size', minLineageSize !== null ? `≥${minLineageSize} seqs` : 'NA',
-          'Minimum number of sequences a lineage needs in the full dataset to be reliably captured in the panel (= ⌈N / panel_size⌉). Lineages below this threshold may be missed by proportional sampling.'),
-        metricCard('Pearson r', sample.pearson_r_full_vs_panel_cluster_proportions !== undefined ? sample.pearson_r_full_vs_panel_cluster_proportions.toFixed(4) : 'NA'),
-        metricCard('Runtime', align.runtime_seconds !== undefined ? `${(align.runtime_seconds / 3600).toFixed(2)} h` : 'NA'),
-        metricCard('PCoA Var', (align.pcoa_axis1_variance_explained_pct !== undefined && align.pcoa_axis2_variance_explained_pct !== undefined) ? `${align.pcoa_axis1_variance_explained_pct.toFixed(1)} / ${align.pcoa_axis2_variance_explained_pct.toFixed(1)}%` : 'NA'),
-        metricCard('Agg Clusters', thrMetrics.cluster_count !== undefined ? thrMetrics.cluster_count : 'NA'),
-        metricCard('Tree Clusters', treeMetrics.cluster_count !== undefined ? treeMetrics.cluster_count : 'NA'),
-        metricCard('Leiden Clusters', afState ? afState.cluster_count : 'NA'),
-        metricCard('NMI', thrMetrics.nmi !== undefined ? thrMetrics.nmi.toFixed(3) : 'NA'),
-        metricCard('Novel < Cutoff', review.novel_genome_count !== undefined ? visibleNovelGenomes : 'NA'),
-      ].join('');
+      const cards = [];
+      if (sample.panel_fraction_pct !== undefined) {
+        cards.push(metricCard('Panel Fraction', `${sample.panel_fraction_pct.toFixed(2)}%`));
+      }
+      if (minLineageSize !== null) {
+        cards.push(metricCard('Min Lineage Size', `≥${minLineageSize} seqs`,
+          'Minimum number of sequences a lineage needs in the full dataset to be reliably captured in the panel (= ⌈N / panel_size⌉). Lineages below this threshold may be missed by proportional sampling.'
+        ));
+      }
+      if (sample.pearson_r_full_vs_panel_cluster_proportions !== undefined) {
+        const pearson = sample.pearson_r_full_vs_panel_cluster_proportions.toFixed(4);
+        const pearsonP = sample.pearson_pvalue !== undefined ? `; p=${formatPValue(sample.pearson_pvalue)}` : '';
+        cards.push(metricCard('Pearson r', `${pearson}${pearsonP}`));
+      }
+      if (sample.panel_fraction_pct === undefined && review.sequence_count !== undefined) {
+        cards.push(metricCard('Sequences', review.sequence_count));
+      }
+      if (sample.panel_fraction_pct === undefined && review.pairwise_comparisons !== undefined) {
+        cards.push(metricCard('Comparisons', Number(review.pairwise_comparisons).toLocaleString()));
+      }
+      cards.push(metricCard('Runtime', align.runtime_seconds !== undefined ? formatRuntime(align.runtime_seconds) : 'NA'));
+      cards.push(metricCard('PCoA Var', (align.pcoa_axis1_variance_explained_pct !== undefined && align.pcoa_axis2_variance_explained_pct !== undefined) ? `${align.pcoa_axis1_variance_explained_pct.toFixed(1)} / ${align.pcoa_axis2_variance_explained_pct.toFixed(1)}%` : 'NA'));
+      cards.push(metricCard('Agg Clusters', displayThrMetrics.cluster_count !== undefined ? displayThrMetrics.cluster_count : 'NA'));
+      cards.push(metricCard('Tree Clusters', displayTreeMetrics.cluster_count !== undefined ? displayTreeMetrics.cluster_count : 'NA'));
+      if (afState) {
+        cards.push(metricCard('Leiden Clusters', afState.cluster_count));
+      } else {
+        const groups = review.source_group_count !== undefined ? review.source_group_count : sourceGroupCount();
+        if (groups !== null) cards.push(metricCard('Source Groups', groups));
+      }
+      cards.push(metricCard(`${activeMetricPrefix} NMI`, activeMetrics.nmi !== undefined ? activeMetrics.nmi.toFixed(3) : 'NA'));
+      if (showSourceValidation && activeMetrics.ari !== undefined) {
+        cards.push(metricCard(`${activeMetricPrefix} ARI`, activeMetrics.ari.toFixed(3)));
+      }
+      if (review.novel_genome_count !== undefined) {
+        cards.push(metricCard('Novel < Cutoff', visibleNovelGenomes));
+      }
+      metrics.innerHTML = cards.join('');
     }
     function agreementColor(value) {
       if (!Number.isFinite(value)) return '#fff';
@@ -1163,6 +1229,12 @@ def html_template(payload_json: str, title: str) -> str:
       setMode('afumap');
     }
     function setAgreementPanel() {
+      if (!hasClusterAgreement) {
+        agreementVisible = false;
+        agreementPanel.classList.remove('active');
+        btnAgreement.classList.remove('active');
+        return;
+      }
       agreementPanel.classList.toggle('active', agreementVisible);
       btnAgreement.classList.toggle('active', agreementVisible);
       btnAgreeAgg.classList.toggle('active', agreementTarget === 'agglomerative');
@@ -1532,6 +1604,7 @@ def html_template(payload_json: str, title: str) -> str:
     btnBest.addEventListener('click', () => setMode('best2'));
     btnTree.addEventListener('click', () => setMode('tree'));
     btnAgreement.addEventListener('click', () => {
+      if (!hasClusterAgreement) return;
       agreementVisible = !agreementVisible;
       btnAgreement.classList.toggle('active', agreementVisible);
       setAgreementPanel();
@@ -1829,12 +1902,16 @@ def run(args) -> None:
     long_agglom_rows = []
     threshold_validation_rows = []
     genome_leiden = {row["id"]: row["source_cluster"] for row in ordered_manifest if row["item_class"] == "genome"}
+    source_labels = {row["id"]: row["source_cluster"] for row in ordered_manifest if row.get("source_cluster")}
+    source_group_count = len(set(source_labels.values()))
+    source_validation_rows = []
     agglomerative_genome_clusters: dict[str, dict[str, str]] = {}
     for threshold in thresholds:
         raw = fit_agglomerative(dist, "complete", threshold)
         cluster_names = normalize_cluster_labels(raw, prefix="A")
         agglom_order = sorted(set(cluster_names), key=lambda cid: cid)
         genome_agg = {}
+        source_agg = dict(zip(ids, cluster_names))
         for point, cid in zip(points, cluster_names):
             point["agglomerative"][str(threshold)] = cid
             if point["item_class"] == "genome":
@@ -1857,6 +1934,17 @@ def run(args) -> None:
                 "nmi": f"{nmi_value:.6f}",
             }
         )
+        source_common_ids = sorted(set(source_labels) & set(source_agg))
+        source_validation_rows.append(
+            {
+                "threshold": f"{threshold:.6f}",
+                "sequence_count": len(source_common_ids),
+                "source_group_count": len({source_labels[i] for i in source_common_ids}),
+                "cluster_count": len(agglom_order),
+                "nmi": f"{nmi([source_labels[i] for i in source_common_ids], [source_agg[i] for i in source_common_ids]):.6f}",
+                "ari": f"{ari([source_labels[i] for i in source_common_ids], [source_agg[i] for i in source_common_ids]):.6f}",
+            }
+        )
         for seq_id, cid in zip(ids, cluster_names):
             long_agglom_rows.append({"id": seq_id, "threshold": f"{threshold:.6f}", "agglomerative_cluster": cid})
 
@@ -1875,17 +1963,24 @@ def run(args) -> None:
     write_tsv(outdir / "agglomerative_threshold_summary.tsv", threshold_rows, ["threshold", "cluster_count", "largest_genome_cluster"])
     write_tsv(outdir / "agglomerative_threshold_assignments.tsv", long_agglom_rows, ["id", "threshold", "agglomerative_cluster"])
     write_tsv(outdir / "agglomerative_validation.tsv", threshold_validation_rows, ["threshold", "cluster_count", "nmi"])
+    write_tsv(
+        outdir / "agglomerative_source_validation.tsv",
+        source_validation_rows,
+        ["threshold", "sequence_count", "source_group_count", "cluster_count", "nmi", "ari"],
+    )
     build_heatmaps(ids, ident, ordered_manifest, outdir)
     tree_payload, tree_dist = build_neighbor_joining_tree(ids, dist, ordered_manifest, outdir)
     tree_threshold_rows = []
     tree_long_rows = []
     tree_validation_rows = []
+    tree_source_validation_rows = []
     tree_genome_clusters: dict[str, dict[str, str]] = {}
     for threshold in thresholds:
         raw = fit_agglomerative(tree_dist, "complete", threshold)
         cluster_names = normalize_cluster_labels(raw, prefix="T")
         tree_order = sorted(set(cluster_names), key=cluster_sort_key)
         genome_tree = {}
+        source_tree = dict(zip(ids, cluster_names))
         for point, cid in zip(points, cluster_names):
             point["tree_clusters"][str(threshold)] = cid
             if point["item_class"] == "genome":
@@ -1908,6 +2003,17 @@ def run(args) -> None:
                 "nmi": f"{nmi_value:.6f}",
             }
         )
+        source_common_ids = sorted(set(source_labels) & set(source_tree))
+        tree_source_validation_rows.append(
+            {
+                "threshold": f"{threshold:.6f}",
+                "sequence_count": len(source_common_ids),
+                "source_group_count": len({source_labels[i] for i in source_common_ids}),
+                "cluster_count": len(tree_order),
+                "nmi": f"{nmi([source_labels[i] for i in source_common_ids], [source_tree[i] for i in source_common_ids]):.6f}",
+                "ari": f"{ari([source_labels[i] for i in source_common_ids], [source_tree[i] for i in source_common_ids]):.6f}",
+            }
+        )
         for seq_id, cid in zip(ids, cluster_names):
             tree_long_rows.append({"id": seq_id, "threshold": f"{threshold:.6f}", "tree_cluster": cid})
         for point in points:
@@ -1921,8 +2027,13 @@ def run(args) -> None:
     write_tsv(outdir / "tree_threshold_summary.tsv", tree_threshold_rows, ["threshold", "cluster_count", "largest_genome_cluster"])
     write_tsv(outdir / "tree_threshold_assignments.tsv", tree_long_rows, ["id", "threshold", "tree_cluster"])
     write_tsv(outdir / "tree_validation.tsv", tree_validation_rows, ["threshold", "cluster_count", "nmi"])
+    write_tsv(
+        outdir / "tree_source_validation.tsv",
+        tree_source_validation_rows,
+        ["threshold", "sequence_count", "source_group_count", "cluster_count", "nmi", "ari"],
+    )
 
-    chosen_threshold_row = choose_closest_cluster_threshold(threshold_rows, len(leiden_order))
+    chosen_threshold_row = choose_closest_cluster_threshold(threshold_rows, source_group_count)
     threshold_metrics = {
         row["threshold"]: {
             "cluster_count": int(row["cluster_count"]),
@@ -1937,7 +2048,27 @@ def run(args) -> None:
         }
         for row, vrow in zip(tree_threshold_rows, tree_validation_rows)
     }
-    chosen_tree_threshold_row = choose_closest_cluster_threshold(tree_threshold_rows, len(leiden_order))
+    source_threshold_metrics = {
+        row["threshold"]: {
+            "sequence_count": int(row["sequence_count"]),
+            "source_group_count": int(row["source_group_count"]),
+            "cluster_count": int(row["cluster_count"]),
+            "nmi": float(row["nmi"]),
+            "ari": float(row["ari"]),
+        }
+        for row in source_validation_rows
+    }
+    source_tree_threshold_metrics = {
+        row["threshold"]: {
+            "sequence_count": int(row["sequence_count"]),
+            "source_group_count": int(row["source_group_count"]),
+            "cluster_count": int(row["cluster_count"]),
+            "nmi": float(row["nmi"]),
+            "ari": float(row["ari"]),
+        }
+        for row in tree_source_validation_rows
+    }
+    chosen_tree_threshold_row = choose_closest_cluster_threshold(tree_threshold_rows, source_group_count)
     novel_genome_count = sum(1 for row in best_rows if row["item_class"] == "genome" and row["candidate_novel"] == "1")
     sample_validation = read_optional_json(Path(args.manifest_tsv).resolve().parent / "validation_metrics.json")
     align_validation = read_optional_json(Path(args.distance_matrix).resolve().parent / "validation_metrics.json")
@@ -1948,6 +2079,8 @@ def run(args) -> None:
     genome_ids = {row["id"] for row in ordered_manifest if row["item_class"] == "genome"}
     if af_widget_dir_text:
         af_states, default_af_state_index = read_af_states(Path(af_widget_dir_text).resolve(), set(ids), genome_ids, chosen_state_id)
+    chosen_threshold = float(chosen_threshold_row["threshold"])
+    default_threshold_index = min(range(len(thresholds)), key=lambda idx: abs(thresholds[idx] - chosen_threshold))
     chosen_tree_threshold = float(chosen_tree_threshold_row["threshold"])
     default_tree_threshold_index = min(range(len(thresholds)), key=lambda idx: abs(thresholds[idx] - chosen_tree_threshold))
     cluster_agreement_rows = []
@@ -2017,6 +2150,9 @@ def run(args) -> None:
             ],
         )
     review_validation = {
+        "sequence_count": len(ids),
+        "source_group_count": source_group_count,
+        "pairwise_comparisons": full_pairwise_count(len(ids)),
         "closest_threshold_to_leiden": chosen_threshold_row["threshold"],
         "closest_threshold_cluster_count": int(chosen_threshold_row["cluster_count"]),
         "closest_tree_threshold_to_leiden": chosen_tree_threshold_row["threshold"],
@@ -2032,6 +2168,8 @@ def run(args) -> None:
         "review": review_validation,
         "thresholds": threshold_metrics,
         "tree_thresholds": tree_threshold_metrics,
+        "source_thresholds": source_threshold_metrics,
+        "source_tree_thresholds": source_tree_threshold_metrics,
     }
     (outdir / "validation_metrics.json").write_text(json.dumps(validation_payload, indent=2))
 
@@ -2043,7 +2181,7 @@ def run(args) -> None:
             "tree_tsv": str(outdir / "tree_threshold_assignments.tsv"),
             "default_export_dir": str(outdir / "exports"),
         },
-        "default_threshold_index": min(len(thresholds) - 1, thresholds.index(0.06) if 0.06 in thresholds else 0),
+        "default_threshold_index": default_threshold_index,
         "novel_threshold": args.novel_threshold,
         "pcoa_axis_labels": {
             "x": f"PCoA 1 ({pcoa_pct1:.1f}%)",

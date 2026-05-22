@@ -8,7 +8,7 @@ from typing import Dict, Iterable, Sequence
 import numpy as np
 from scipy.stats import pearsonr
 from sklearn.manifold import trustworthiness
-from sklearn.metrics import normalized_mutual_info_score
+from sklearn.metrics import adjusted_rand_score, normalized_mutual_info_score
 
 
 def full_pairwise_count(n: int) -> int:
@@ -62,6 +62,10 @@ def choose_closest_cluster_threshold(summary_rows: Sequence[dict], target_cluste
 
 def nmi(leiden_labels: Sequence[str], distance_labels: Sequence[str]) -> float:
     return float(normalized_mutual_info_score(leiden_labels, distance_labels))
+
+
+def ari(source_labels: Sequence[str], distance_labels: Sequence[str]) -> float:
+    return float(adjusted_rand_score(source_labels, distance_labels))
 
 
 def _stratified_ids(
