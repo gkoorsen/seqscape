@@ -90,22 +90,6 @@ The current suite includes:
 - core utility tests
 - a synthetic end-to-end smoke test covering all four pipeline stages
 
-## Citation
-
-Citation metadata is in:
-- [CITATION.cff](/Users/gerritkoorsen/ciderseq-mono/cideseq-mono/seqscape/CITATION.cff)
-
-For now, cite the software as:
-
-```text
-Koorsen G. SeqScape. Version 0.1.0.
-```
-
-The release DOI will be added before JOSS submission.
-
-JOSS manuscript draft:
-- [paper/paper.md](/Users/gerritkoorsen/ciderseq-mono/cideseq-mono/seqscape/paper/paper.md)
-
 ## Contributing
 
 Contribution guidance is in:
