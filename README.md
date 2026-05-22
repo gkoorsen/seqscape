@@ -2,8 +2,6 @@
 
 `SeqScape` is a staged workflow for sequence-space exploration, representative sampling, and alignment-based review.
 
-It is being extracted from the larger exploratory repository into a smaller publication-facing software package for the planned JOSS and BMC Bioinformatics papers.
-
 Repository:
 - `https://github.com/gkoorsen/seqscape`
 
