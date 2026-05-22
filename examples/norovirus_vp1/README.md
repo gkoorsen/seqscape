@@ -4,6 +4,22 @@ Anchor paper: Chhabra et al. 2019, *J Gen Virol* — established the current
 10-genogroup / 49-genotype norovirus taxonomy from pairwise-distance analysis
 of 305 curated complete VP1 reference sequences.
 
+## Browser widgets
+
+Selected rendered outputs are tracked under `runs/` for immediate inspection.
+When using a downloaded copy of the repository or release archive, open these
+HTML files directly in a browser:
+
+- `runs/af/af_leiden_parameter_widget.html` — alignment-free parameter explorer
+- `runs/review/panel_review_widget.html` — full norovirus VP1 panel review
+- `runs/review/heatmap_panel_square.html` — panel-by-panel identity heatmap
+- `runs/review/heatmap_genome_x_reference.html` — panel-by-reference identity heatmap
+- `runs/chhabra302/review/panel_review_widget.html` — Chhabra reference-set validation
+- `runs/chhabra302/review/heatmap_panel_square.html` — Chhabra reference-set heatmap
+
+GitHub displays HTML files as source code. For the interactive widgets, download
+the repository or release archive first, then open the local `.html` file.
+
 ## Dataset plan
 
 - **Full collection** (this directory): Norovirus nuccore records, 1500–2500 nt,

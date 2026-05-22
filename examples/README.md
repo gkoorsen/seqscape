@@ -33,6 +33,21 @@ inspection without rerunning the full workflow:
 - [Chhabra 302 panel review widget](norovirus_vp1/runs/chhabra302/review/panel_review_widget.html)
 - [Chhabra 302 panel square heatmap](norovirus_vp1/runs/chhabra302/review/heatmap_panel_square.html)
 
+These files are self-contained browser widgets. When using a downloaded copy of
+the repository or release archive, open the `.html` files directly in a browser;
+no command-line step or local web server is required. GitHub's web interface
+shows HTML files as source code, so the interactive view is best accessed from a
+downloaded copy.
+
+Suggested first views:
+
+- `norovirus_vp1/runs/af/af_leiden_parameter_widget.html` for the
+  alignment-free parameter search and Leiden cluster states
+- `norovirus_vp1/runs/review/panel_review_widget.html` for the full
+  500-sequence norovirus VP1 panel review
+- `norovirus_vp1/runs/chhabra302/review/panel_review_widget.html` for the
+  Chhabra reference-set validation benchmark
+
 ## Reproduction
 
 The `data/` directories and most `runs/` outputs are **not** tracked in the
