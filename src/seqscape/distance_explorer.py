@@ -1662,7 +1662,7 @@ def html_template(payload_json: str, title: str) -> str:
         if (c != null) clusterSet.add(String(c));
       });
       const clusterNames = Array.from(clusterSet).sort((a, b) => {
-        const na = a.match(/\d+/), nb = b.match(/\d+/);
+        const na = a.match(/\\d+/), nb = b.match(/\\d+/);
         if (na && nb) return Number(na[0]) - Number(nb[0]);
         return a.localeCompare(b);
       });
@@ -1708,7 +1708,7 @@ def html_template(payload_json: str, title: str) -> str:
             "--filename-prefix 'agg_" + thresh + '_' + joinedNames + "'",
             "--outdir '" + outDir + "'",
           ].join(' '),
-        ].join('\n');
+        ].join('\\n');
       }
       if (scheme === 'tree_cluster') {
         return [
@@ -1724,7 +1724,7 @@ def html_template(payload_json: str, title: str) -> str:
             "--filename-prefix 'tree_" + treeThresh + '_' + joinedNames + "'",
             "--outdir '" + outDir + "'",
           ].join(' '),
-        ].join('\n');
+        ].join('\\n');
       }
       return null;
     }
@@ -1752,7 +1752,7 @@ def html_template(payload_json: str, title: str) -> str:
       if (names.length === 0) { alert('Select at least one cluster.'); return; }
       const ids = currentReviewClusterMembers(names);
       const tag = scheme === 'tree_cluster' ? ('tree_' + currentTreeThreshold()) : (scheme === 'agglomerative' ? ('agg_' + currentThreshold()) : 'leiden');
-      downloadText(tag + '_' + names.join('_') + '_ids.txt', ids.join('\n') + '\n');
+      downloadText(tag + '_' + names.join('_') + '_ids.txt', ids.join('\\n') + '\\n');
     });
     reviewExportCmdBtn.addEventListener('click', () => {
       const names = selectedReviewClusters();
@@ -1760,7 +1760,7 @@ def html_template(payload_json: str, title: str) -> str:
       const cmd = currentReviewExportCommand(names);
       if (!cmd) { alert('Command export is only available for Agglomerative and Tree clustering schemes.'); return; }
       const tag = scheme === 'tree_cluster' ? ('tree_' + currentTreeThreshold()) : ('agg_' + currentThreshold());
-      downloadText(tag + '_' + names.join('_') + '_export.sh', cmd + '\n');
+      downloadText(tag + '_' + names.join('_') + '_export.sh', cmd + '\\n');
     });
 
     setLegend();
