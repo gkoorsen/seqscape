@@ -13,22 +13,74 @@ import numpy as np
 from Bio import SeqIO
 
 
+def _is_usable_exe(candidate: Path) -> bool:
+    """Return True if `candidate` is an existing, executable file.
+
+    Probing paths that exist but are not readable (e.g. a foreign conda env on
+    a sandboxed machine) raises OSError from ``is_file``/``os.access`` rather
+    than returning False, so all filesystem probes are guarded here. This keeps
+    resolution from aborting on inaccessible candidates and lets it fall
+    through to the next option.
+    """
+    try:
+        return candidate.is_file() and os.access(candidate, os.X_OK)
+    except OSError:
+        return False
+
+
 def resolve_muscle_exe(path_hint: str) -> str:
-    if path_hint and path_hint != "muscle" and Path(path_hint).is_file():
-        return str(Path(path_hint).resolve())
-    repo_root = Path(__file__).resolve().parents[3]
-    candidates = [
-        Path("/Users/gerritkoorsen/opt/anaconda3/envs/ciderseq-muscle/bin/muscle"),
-        repo_root / ".muscle-env" / "bin" / "muscle",
-        repo_root.parent / ".muscle-env" / "bin" / "muscle",
-    ]
-    for candidate in candidates:
-        if candidate.is_file() and os.access(candidate, os.X_OK):
-            return str(candidate.resolve())
+    """Resolve a usable MUSCLE executable.
+
+    Resolution order, first hit wins:
+      1. An explicit ``path_hint`` (anything other than the bare name "muscle").
+      2. ``muscle`` on the ``PATH`` (the conda/pip-installed executable).
+      3. A repo-local ``.muscle-env/bin/muscle`` fallback, checked relative to
+         the repository so it works from any checkout location.
+
+    No absolute, machine-specific paths are hardcoded; every filesystem probe is
+    guarded against OSError so an inaccessible candidate is skipped rather than
+    crashing the pipeline.
+    """
+    # 1. Honour an explicit user-supplied path.
+    if path_hint and path_hint != "muscle":
+        hint = Path(path_hint)
+        if _is_usable_exe(hint):
+            return str(hint.resolve())
+
+    # 2. Prefer whatever is on PATH.
     found = shutil.which("muscle")
     if found:
         return found
+
+    # 3. Repo-local fallback environments (relative to this checkout).
+    repo_root = Path(__file__).resolve().parents[3]
+    for candidate in (
+        repo_root / ".muscle-env" / "bin" / "muscle",
+        repo_root.parent / ".muscle-env" / "bin" / "muscle",
+    ):
+        if _is_usable_exe(candidate):
+            return str(candidate.resolve())
+
+    # 4. Last resort: return the hint (or bare name) and let the caller surface
+    #    a clear "muscle not found" error at invocation time.
     return path_hint or "muscle"
+
+
+def resolve_mafft_exe(path_hint: str) -> str:
+    """Resolve a usable MAFFT executable.
+
+    Mirrors :func:`resolve_muscle_exe`: an explicit ``path_hint`` wins, then
+    ``mafft`` on the ``PATH``. No absolute, machine-specific paths are
+    hardcoded, and every filesystem probe is guarded against OSError.
+    """
+    if path_hint and path_hint != "mafft":
+        hint = Path(path_hint)
+        if _is_usable_exe(hint):
+            return str(hint.resolve())
+    found = shutil.which("mafft")
+    if found:
+        return found
+    return path_hint or "mafft"
 
 
 def global_identity_pairwisealigner(ref_seq: str, qry_seq: str) -> float:

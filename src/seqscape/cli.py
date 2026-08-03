@@ -47,7 +47,7 @@ def parse_args() -> argparse.Namespace:
     ap_align.add_argument("--panel-fasta", required=True)
     ap_align.add_argument("--manifest-tsv", required=True)
     ap_align.add_argument("--aligner", choices=["pairwisealigner", "mafft", "muscle"], default="muscle")
-    ap_align.add_argument("--mafft", default="/opt/homebrew/bin/mafft")
+    ap_align.add_argument("--mafft", default="mafft")
     ap_align.add_argument("--muscle", default="muscle")
     ap_align.add_argument("--jobs", type=int, default=8)
     ap_align.add_argument("--progress-every", type=int, default=500)

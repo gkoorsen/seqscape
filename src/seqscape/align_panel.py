@@ -8,7 +8,7 @@ from pathlib import Path
 
 import numpy as np
 
-from .alignment import build_identity_matrix, identity_to_distance, resolve_muscle_exe
+from .alignment import build_identity_matrix, identity_to_distance, resolve_mafft_exe, resolve_muscle_exe
 from .io_utils import load_fasta_records
 from .ordination import pcoa
 from .validation import pcoa_variance_explained
@@ -39,8 +39,9 @@ def run(args) -> None:
         items.append(item)
 
     muscle_exe = resolve_muscle_exe(args.muscle)
+    mafft_exe = resolve_mafft_exe(args.mafft)
     started = time.perf_counter()
-    ids, ident = build_identity_matrix(items, args.aligner, args.mafft, muscle_exe, args.jobs, args.progress_every)
+    ids, ident = build_identity_matrix(items, args.aligner, mafft_exe, muscle_exe, args.jobs, args.progress_every)
     runtime_seconds = time.perf_counter() - started
     dist = identity_to_distance(ident)
     write_matrix_tsv(outdir / "matrix_identity.tsv", ids, ident, "{:.6f}")
