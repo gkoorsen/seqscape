@@ -1,0 +1,2 @@
+recombinant_resolved	backbone_parent	donor_parent	members	openrdp_recombinant_labels	n_methods	methods	breakpoint_start	breakpoint_end	start_min	end_max	min_pvalue	informative_sites_tract	informative_sites_flank	tract_supports	flank_supports	role_support
+IS76_LN812978	TYLCV_IL_AM409201	TYLCSV_NC_003828	IS76_LN812978;TYLCSV_NC_003828;TYLCV_IL_AM409201	IS76_LN812978;TYLCSV_NC_003828	2	geneconv,rdp	1382	1492	1343	1492	0.0	36	592	TYLCSV_NC_003828	TYLCV_IL_AM409201	628

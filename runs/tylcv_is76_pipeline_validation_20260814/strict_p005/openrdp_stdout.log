@@ -1,0 +1,46 @@
+### rdp
+
+Method  	Start	End	Recombinant	Parent1	Parent2	Pvalue
+------------------------------------------------------------------------
+RDP     	1343	1420	TYLCSV_NC_003828	IS76_LN812978	TYLCV_IL_AM409201	3.64E+01
+
+
+### geneconv
+
+Method  	Start	End	Recombinant	Parent1	Parent2	Pvalue
+------------------------------------------------------------------------
+Geneconv	1382	1492	IS76_LN812978	TYLCSV_NC_003828	-      	0.00E+00
+Geneconv	5	1359	IS76_LN812978	TYLCV_IL_AM409201	-      	3.17E-02
+Geneconv	1382	1492	TYLCV_IL_AM409201	-      	-      	0.00E+00
+Geneconv	5	1359	TYLCSV_NC_003828	-      	-      	3.04E-02
+
+
+### maxchi
+
+Method  	Start	End	Recombinant	Parent1	Parent2	Pvalue
+------------------------------------------------------------------------
+
+
+### chimaera
+
+Method  	Start	End	Recombinant	Parent1	Parent2	Pvalue
+------------------------------------------------------------------------
+
+
+### threeseq
+
+Method  	Start	End	Recombinant	Parent1	Parent2	Pvalue
+------------------------------------------------------------------------
+
+
+### bootscan
+
+Method  	Start	End	Recombinant	Parent1	Parent2	Pvalue
+------------------------------------------------------------------------
+
+
+### siscan
+
+Method  	Start	End	Recombinant	Parent1	Parent2	Pvalue
+------------------------------------------------------------------------
+

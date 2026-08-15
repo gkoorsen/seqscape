@@ -1,0 +1,5 @@
+Method,Start,End,Recombinant,Parent1,Parent2,Pvalue
+Geneconv,194,304,LN812978,NC_003828,-,0.00000
+Geneconv,1,232,LN812978,AM409201,-,0.00535
+Geneconv,194,304,AM409201,-,-,0.00000
+Geneconv,1,232,NC_003828,-,-,0.02379

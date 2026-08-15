@@ -1,0 +1,4 @@
+id	source_length	window_size	window_start_1based	motif_start_1based	motif_start_in_window	motif_end_in_window	motif_mismatches	motif_match
+LN812978	2773	1000	2271	2767	497	505	0	TAATATTAC
+AM409201	2781	1000	2279	2775	497	505	0	TAATATTAC
+NC_003828	2773	1000	2278	1	497	505	0	TAATATTAC

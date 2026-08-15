@@ -1,0 +1,8 @@
+method	strict_status
+rdp	ok
+geneconv	ok
+maxchi	ok
+chimaera	ok
+threeseq	ok
+bootscan	ok
+siscan	ok

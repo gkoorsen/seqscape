@@ -1,0 +1,16 @@
+alignment_fasta	/Users/gerritkoorsen/ciderseq-mono/cideseq-mono/runs/tocsv_260203_full_aws_20260612/full_run/comparators/is76_control_alignment.fasta
+methods	rdp,geneconv,maxchi,chimaera,threeseq,bootscan,siscan
+min_methods	1
+pvalue_max	0.05
+iupac_sites_recoded_to_n	0
+iupac_records_affected	0
+method_status.rdp	ok
+method_status.geneconv	ok
+method_status.maxchi	ok
+method_status.chimaera	ok
+method_status.threeseq	ok
+method_status.bootscan	ok
+method_status.siscan	ok
+n_events_raw	5
+n_consensus_events	1
+raw_csv	/Users/gerritkoorsen/ciderseq-mono/cideseq-mono/seqscape/runs/tylcv_is76_pipeline_validation_20260814/strict_p005/recombination_raw.csv

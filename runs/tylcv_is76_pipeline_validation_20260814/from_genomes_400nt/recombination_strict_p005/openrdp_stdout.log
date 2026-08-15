@@ -1,0 +1,47 @@
+### rdp
+
+Method  	Start	End	Recombinant	Parent1	Parent2	Pvalue
+------------------------------------------------------------------------
+RDP     	155	232	NC_003828  	AM409201	LN812978	5.49E+00
+
+
+### geneconv
+
+Method  	Start	End	Recombinant	Parent1	Parent2	Pvalue
+------------------------------------------------------------------------
+Geneconv	194	304	LN812978   	NC_003828	-      	0.00E+00
+Geneconv	1	232	LN812978   	AM409201	-      	5.35E-03
+Geneconv	194	304	AM409201   	-      	-      	0.00E+00
+Geneconv	1	232	NC_003828  	-      	-      	2.38E-02
+
+
+### maxchi
+
+Method  	Start	End	Recombinant	Parent1	Parent2	Pvalue
+------------------------------------------------------------------------
+
+
+### chimaera
+
+Method  	Start	End	Recombinant	Parent1	Parent2	Pvalue
+------------------------------------------------------------------------
+
+
+### threeseq
+
+Method  	Start	End	Recombinant	Parent1	Parent2	Pvalue
+------------------------------------------------------------------------
+
+
+### bootscan
+
+Method  	Start	End	Recombinant	Parent1	Parent2	Pvalue
+------------------------------------------------------------------------
+Bootscan	100	500	AM409201   	LN812978	NC_003828	4.63E-02
+
+
+### siscan
+
+Method  	Start	End	Recombinant	Parent1	Parent2	Pvalue
+------------------------------------------------------------------------
+

@@ -1,0 +1,3 @@
+input	records	consensus	recombinant	backbone_parent	donor_parent	methods	breakpoint_columns	min_pvalue	role_support	interpretation
+400 nt origin window from comparator genomes	3	detected	not resolved	not resolved	not resolved	bootscan,geneconv	100-304	0.0	0	event detected, but the window is too short for flank-based role resolution
+1000 nt origin window from comparator genomes	3	detected	LN812978	AM409201	NC_003828	geneconv	494-604	0.0	236	event and expected parent roles recovered

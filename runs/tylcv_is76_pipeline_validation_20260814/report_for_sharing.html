@@ -1,0 +1,412 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes" />
+  <title>report</title>
+  <style>
+    /* Default styles provided by pandoc.
+    ** See https://pandoc.org/MANUAL.html#variables-for-html for config info.
+    */
+    span.smallcaps{font-variant: small-caps;}
+    div.columns{display: flex; gap: min(4vw, 1.5em);}
+    div.column{flex: auto; overflow-x: auto;}
+    div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+    /* The extra [class] is a hack that increases specificity enough to
+       override a similar rule in reveal.js */
+    ul.task-list[class]{list-style: none;}
+    ul.task-list li input[type="checkbox"] {
+      font-size: inherit;
+      width: 0.8em;
+      margin: 0 0.8em 0.2em -1.6em;
+      vertical-align: middle;
+    }
+    .display.math{display: block; text-align: center; margin: 0.5rem auto;}
+    /* CSS for syntax highlighting */
+    html { -webkit-text-size-adjust: 100%; }
+    pre > code.sourceCode { white-space: pre; position: relative; }
+    pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+    pre > code.sourceCode > span:empty { height: 1.2em; }
+    .sourceCode { overflow: visible; }
+    code.sourceCode > span { color: inherit; text-decoration: inherit; }
+    div.sourceCode { margin: 1em 0; }
+    pre.sourceCode { margin: 0; }
+    @media screen {
+    div.sourceCode { overflow: auto; }
+    }
+    @media print {
+    pre > code.sourceCode { white-space: pre-wrap; }
+    pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+    }
+    pre.numberSource code
+      { counter-reset: source-line 0; }
+    pre.numberSource code > span
+      { position: relative; left: -4em; counter-increment: source-line; }
+    pre.numberSource code > span > a:first-child::before
+      { content: counter(source-line);
+        position: relative; left: -1em; text-align: right; vertical-align: baseline;
+        border: none; display: inline-block;
+        -webkit-touch-callout: none; -webkit-user-select: none;
+        -khtml-user-select: none; -moz-user-select: none;
+        -ms-user-select: none; user-select: none;
+        padding: 0 4px; width: 4em;
+        color: #aaaaaa;
+      }
+    pre.numberSource { margin-left: 3em; border-left: 1px solid #aaaaaa;  padding-left: 4px; }
+    div.sourceCode
+      {   }
+    @media screen {
+    pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+    }
+    code span.al { color: #ff0000; font-weight: bold; } /* Alert */
+    code span.an { color: #60a0b0; font-weight: bold; font-style: italic; } /* Annotation */
+    code span.at { color: #7d9029; } /* Attribute */
+    code span.bn { color: #40a070; } /* BaseN */
+    code span.bu { color: #008000; } /* BuiltIn */
+    code span.cf { color: #007020; font-weight: bold; } /* ControlFlow */
+    code span.ch { color: #4070a0; } /* Char */
+    code span.cn { color: #880000; } /* Constant */
+    code span.co { color: #60a0b0; font-style: italic; } /* Comment */
+    code span.cv { color: #60a0b0; font-weight: bold; font-style: italic; } /* CommentVar */
+    code span.do { color: #ba2121; font-style: italic; } /* Documentation */
+    code span.dt { color: #902000; } /* DataType */
+    code span.dv { color: #40a070; } /* DecVal */
+    code span.er { color: #ff0000; font-weight: bold; } /* Error */
+    code span.ex { } /* Extension */
+    code span.fl { color: #40a070; } /* Float */
+    code span.fu { color: #06287e; } /* Function */
+    code span.im { color: #008000; font-weight: bold; } /* Import */
+    code span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Information */
+    code span.kw { color: #007020; font-weight: bold; } /* Keyword */
+    code span.op { color: #666666; } /* Operator */
+    code span.ot { color: #007020; } /* Other */
+    code span.pp { color: #bc7a00; } /* Preprocessor */
+    code span.sc { color: #4070a0; } /* SpecialChar */
+    code span.ss { color: #bb6688; } /* SpecialString */
+    code span.st { color: #4070a0; } /* String */
+    code span.va { color: #19177c; } /* Variable */
+    code span.vs { color: #4070a0; } /* VerbatimString */
+    code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warning */
+  </style>
+  <link rel="stylesheet" href="report_pdf.css" />
+</head>
+<body>
+<h1 id="tylcv-is76-positive-control-validation">TYLCV-IS76
+Positive-Control Validation</h1>
+<h2 id="result">Result</h2>
+<p>The SeqScape recombination wrapper recovered the known TYLCV-IS76
+resistance-breaking recombinant signal. In the strict screen
+(<code>p &lt;= 0.05</code>), the consensus event resolves:</p>
+<ul>
+<li>recombinant: <code>IS76_LN812978</code></li>
+<li>backbone parent: <code>TYLCV_IL_AM409201</code></li>
+<li>donor parent: <code>TYLCSV_NC_003828</code></li>
+<li>breakpoint interval: alignment columns <code>1382-1492</code></li>
+<li>strict supporting method: <code>geneconv</code></li>
+<li>role support: <code>628</code> informative sites</li>
+</ul>
+<p>The audit run retains RDP’s score-like output and merges it with
+GENECONV over the same tract envelope (<code>1343-1492</code>). This is
+reported separately because the RDP output column is not a valid
+probability in this OpenRDP run (<code>36.36</code>, greater than 1),
+while GENECONV gives the strict significant call.</p>
+<h2 id="input">Input</h2>
+<p>Input alignment:</p>
+<p><code>/Users/gerritkoorsen/ciderseq-mono/cideseq-mono/runs/tocsv_260203_full_aws_20260612/full_run/comparators/is76_control_alignment.fasta</code></p>
+<p>Positive-control metadata:</p>
+<p><code>/Users/gerritkoorsen/ciderseq-mono/cideseq-mono/runs/tocsv_260203_full_aws_20260612/full_run/comparators/is76_positive_control.json</code></p>
+<table>
+<thead>
+<tr>
+<th>role</th>
+<th>id</th>
+<th>description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>known recombinant</td>
+<td>IS76_LN812978</td>
+<td>TYLCV-IS76 isolate G8 (Morocco)</td>
+</tr>
+<tr>
+<td>backbone parent</td>
+<td>TYLCV_IL_AM409201</td>
+<td>TYLCV-IL isolate RE4 (Reunion, 2004)</td>
+</tr>
+<tr>
+<td>donor parent</td>
+<td>TYLCSV_NC_003828</td>
+<td>TYLCSV reference</td>
+</tr>
+</tbody>
+</table>
+<p>The metadata file records the published TYLCV-IS76 tract as
+approximately 76 nt. The local control annotation places the recovered
+signal in the intergenic region immediately downstream of the conserved
+origin motif, with a reconstructed tract range of 57-103 nt.</p>
+<h2 id="recombination-calls">Recombination Calls</h2>
+<table>
+<colgroup>
+<col style="width: 12%" />
+<col style="width: 12%" />
+<col style="width: 12%" />
+<col style="width: 12%" />
+<col style="width: 12%" />
+<col style="width: 12%" />
+<col style="width: 12%" />
+<col style="width: 12%" />
+</colgroup>
+<thead>
+<tr>
+<th>run</th>
+<th>recombinant</th>
+<th>backbone_parent</th>
+<th>donor_parent</th>
+<th>methods</th>
+<th>breakpoint_columns</th>
+<th>min_pvalue</th>
+<th>role_support</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>strict p&lt;=0.05</td>
+<td>IS76_LN812978</td>
+<td>TYLCV_IL_AM409201</td>
+<td>TYLCSV_NC_003828</td>
+<td>geneconv</td>
+<td>1382-1492</td>
+<td>0.0</td>
+<td>628</td>
+</tr>
+<tr>
+<td>RDP audit p&lt;=1.0</td>
+<td>IS76_LN812978</td>
+<td>TYLCV_IL_AM409201</td>
+<td>TYLCSV_NC_003828</td>
+<td>geneconv,rdp</td>
+<td>1343-1492</td>
+<td>0.0</td>
+<td>628</td>
+</tr>
+</tbody>
+</table>
+<p>All OpenRDP methods completed in the strict run:</p>
+<table>
+<thead>
+<tr>
+<th>method</th>
+<th>strict_status</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>rdp</td>
+<td>ok</td>
+</tr>
+<tr>
+<td>geneconv</td>
+<td>ok</td>
+</tr>
+<tr>
+<td>maxchi</td>
+<td>ok</td>
+</tr>
+<tr>
+<td>chimaera</td>
+<td>ok</td>
+</tr>
+<tr>
+<td>threeseq</td>
+<td>ok</td>
+</tr>
+<tr>
+<td>bootscan</td>
+<td>ok</td>
+</tr>
+<tr>
+<td>siscan</td>
+<td>ok</td>
+</tr>
+</tbody>
+</table>
+<h2 id="genome-derived-pipeline-check">Genome-Derived Pipeline
+Check</h2>
+<p>To test the practical workflow from comparator genomes, the three
+positive-control records were extracted from:</p>
+<p><code>/Users/gerritkoorsen/ciderseq-mono/cideseq-mono/runs/tocsv_260203_full_aws_20260612/full_run/comparators/comparator_panel.fasta</code></p>
+<p>Origin-centered windows were cut around the conserved
+<code>TAATATTAC</code> motif, aligned with MAFFT, and passed through the
+same SeqScape recombination wrapper.</p>
+<table>
+<colgroup>
+<col style="width: 9%" />
+<col style="width: 9%" />
+<col style="width: 9%" />
+<col style="width: 9%" />
+<col style="width: 9%" />
+<col style="width: 9%" />
+<col style="width: 9%" />
+<col style="width: 9%" />
+<col style="width: 9%" />
+<col style="width: 9%" />
+<col style="width: 9%" />
+</colgroup>
+<thead>
+<tr>
+<th>input</th>
+<th>records</th>
+<th>consensus</th>
+<th>recombinant</th>
+<th>backbone_parent</th>
+<th>donor_parent</th>
+<th>methods</th>
+<th>breakpoint_columns</th>
+<th>min_pvalue</th>
+<th>role_support</th>
+<th>interpretation</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>400 nt origin window from comparator genomes</td>
+<td>3</td>
+<td>detected</td>
+<td>not resolved</td>
+<td>not resolved</td>
+<td>not resolved</td>
+<td>bootscan,geneconv</td>
+<td>100-304</td>
+<td>0.0</td>
+<td>0</td>
+<td>event detected, but the window is too short for flank-based role
+resolution</td>
+</tr>
+<tr>
+<td>1000 nt origin window from comparator genomes</td>
+<td>3</td>
+<td>detected</td>
+<td>LN812978</td>
+<td>AM409201</td>
+<td>NC_003828</td>
+<td>geneconv</td>
+<td>494-604</td>
+<td>0.0</td>
+<td>236</td>
+<td>event and expected parent roles recovered</td>
+</tr>
+</tbody>
+</table>
+<p>The 400 nt window is sensitive enough to detect the event, but its
+significant intervals consume most of the window and leave no
+informative flank support for parent-role polarisation. The 1000 nt
+origin window resolves the expected roles directly from the extracted
+genomes: <code>LN812978</code> as recombinant, <code>AM409201</code> as
+backbone parent, and <code>NC_003828</code> as donor parent.</p>
+<h2 id="figures">Figures</h2>
+<figure>
+<img src="figures/is76_parental_state_across_alignment.png"
+alt="Parent-state scan" />
+<figcaption aria-hidden="true">Parent-state scan</figcaption>
+</figure>
+<p><strong>Figure 1.</strong> Informative-site scan across the aligned
+TYLCV-IS76 positive control. Blue sites are columns where IS76 matches
+the TYLCV-IL backbone parent; orange sites are columns where IS76
+matches the TYLCSV donor parent. The strict GENECONV tract is shaded
+yellow. The RDP+GENECONV audit envelope is shaded purple.</p>
+<figure>
+<img src="figures/is76_breakpoint_zoom.png" alt="Breakpoint zoom" />
+<figcaption aria-hidden="true">Breakpoint zoom</figcaption>
+</figure>
+<p><strong>Figure 2.</strong> Zoom around the recovered breakpoint
+region. The donor-like informative sites concentrate inside the
+OpenRDP/GENECONV interval, while the flanking sequence returns to the
+TYLCV-IL backbone state.</p>
+<figure>
+<img src="figures/openrdp_method_intervals.png"
+alt="Method intervals" />
+<figcaption aria-hidden="true">Method intervals</figcaption>
+</figure>
+<p><strong>Figure 3.</strong> OpenRDP method intervals in the
+positive-control run. GENECONV gives the strict significant interval;
+RDP reports an overlapping interval but its numeric field is score-like
+rather than a p-value in this run.</p>
+<figure>
+<img src="figures/is76_origin_window_1000nt_parental_state.png"
+alt="Genome-derived origin-window scan" />
+<figcaption aria-hidden="true">Genome-derived origin-window
+scan</figcaption>
+</figure>
+<p><strong>Figure 4.</strong> Informative-site scan for the 1000 nt
+origin-centered window extracted from the comparator genome FASTA. The
+donor-like sites concentrate in the strict GENECONV interval, while
+flanking sites support the TYLCV-IL backbone parent.</p>
+<h2 id="interpretation">Interpretation</h2>
+<p>This positive-control test passes. The pipeline detects the known
+resistance-breaking recombination pattern and assigns the expected
+roles: IS76 as recombinant, TYLCV-IL as the backbone parent, and TYLCSV
+as the donor-side parent.</p>
+<p>The strict result is intentionally conservative: it promotes the
+GENECONV-supported event under <code>p &lt;= 0.05</code>. The RDP audit
+supports the same region geometrically, but is not counted as strict
+statistical support because OpenRDP emits a value outside the
+probability range for that method in this control.</p>
+<p>For full-genome inputs, this validation supports using an
+origin-centered window with enough flanking sequence for role
+assignment. A 1000 nt window worked for this positive control; a 400 nt
+window detected recombination but did not retain enough flanking signal
+to resolve the parent roles.</p>
+<p>Informative-site counts from the alignment:</p>
+<ul>
+<li>donor-matching informative sites: 30</li>
+<li>backbone-matching informative sites: 598</li>
+<li>other informative states: 6</li>
+<li>total informative sites: 634</li>
+</ul>
+<p>The <code>role_support</code> value is the donor-matching plus
+backbone-matching count (<code>628</code>); the six other informative
+states are retained in the figure but are not counted as role
+support.</p>
+<h2 id="commands">Commands</h2>
+<p>Strict run:</p>
+<div class="sourceCode" id="cb1"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="va">PATH</span><span class="op">=</span><span class="st">&quot;/private/tmp/openrdp-validation-venv/bin:</span><span class="va">$PATH</span><span class="st">&quot;</span> <span class="va">PYTHONPATH</span><span class="op">=</span>src <span class="dt">\</span></span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="ex">python</span> <span class="at">-m</span> seqscape.cli recombination <span class="dt">\</span></span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a>  <span class="at">--alignment-fasta</span> <span class="st">&quot;/Users/gerritkoorsen/ciderseq-mono/cideseq-mono/runs/tocsv_260203_full_aws_20260612/full_run/comparators/is76_control_alignment.fasta&quot;</span> <span class="dt">\</span></span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a>  <span class="at">--methods</span> rdp,geneconv,maxchi,chimaera,threeseq,bootscan,siscan <span class="dt">\</span></span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a>  <span class="at">--min-methods</span> 1 <span class="dt">\</span></span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a>  <span class="at">--pvalue</span> 0.05 <span class="dt">\</span></span>
+<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a>  <span class="at">--outdir</span> <span class="st">&quot;/Users/gerritkoorsen/ciderseq-mono/cideseq-mono/seqscape/runs/tylcv_is76_pipeline_validation_20260814/strict_p005&quot;</span></span></code></pre></div>
+<p>RDP audit run:</p>
+<div class="sourceCode" id="cb2"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="va">PATH</span><span class="op">=</span><span class="st">&quot;/private/tmp/openrdp-validation-venv/bin:</span><span class="va">$PATH</span><span class="st">&quot;</span> <span class="va">PYTHONPATH</span><span class="op">=</span>src <span class="dt">\</span></span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a><span class="ex">python</span> <span class="at">-m</span> seqscape.cli recombination <span class="dt">\</span></span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a>  <span class="at">--alignment-fasta</span> <span class="st">&quot;/Users/gerritkoorsen/ciderseq-mono/cideseq-mono/runs/tocsv_260203_full_aws_20260612/full_run/comparators/is76_control_alignment.fasta&quot;</span> <span class="dt">\</span></span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a>  <span class="at">--methods</span> rdp,geneconv,maxchi,chimaera,threeseq,bootscan,siscan <span class="dt">\</span></span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a>  <span class="at">--min-methods</span> 1 <span class="dt">\</span></span>
+<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a>  <span class="at">--pvalue</span> 1.0 <span class="dt">\</span></span>
+<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a>  <span class="at">--outdir</span> <span class="st">&quot;/Users/gerritkoorsen/ciderseq-mono/cideseq-mono/seqscape/runs/tylcv_is76_pipeline_validation_20260814/rdp_audit_p1&quot;</span></span></code></pre></div>
+<p>Genome-derived 1000 nt origin-window run:</p>
+<div class="sourceCode" id="cb3"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="ex">python</span> scripts/extract_origin_windows.py <span class="dt">\</span></span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a>  <span class="at">--fasta</span> <span class="st">&quot;/Users/gerritkoorsen/ciderseq-mono/cideseq-mono/runs/tocsv_260203_full_aws_20260612/full_run/comparators/comparator_panel.fasta&quot;</span> <span class="dt">\</span></span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a>  <span class="at">--ids</span> <span class="st">&quot;/Users/gerritkoorsen/ciderseq-mono/cideseq-mono/seqscape/runs/tylcv_is76_pipeline_validation_20260814/inputs/is76_ids.txt&quot;</span> <span class="dt">\</span></span>
+<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a>  <span class="at">--window-size</span> 1000 <span class="dt">\</span></span>
+<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a>  <span class="at">--out-fasta</span> <span class="st">&quot;/Users/gerritkoorsen/ciderseq-mono/cideseq-mono/seqscape/runs/tylcv_is76_pipeline_validation_20260814/from_genomes_1000nt/is76_origin_window_1000nt.fasta&quot;</span> <span class="dt">\</span></span>
+<span id="cb3-6"><a href="#cb3-6" aria-hidden="true" tabindex="-1"></a>  <span class="at">--manifest-tsv</span> <span class="st">&quot;/Users/gerritkoorsen/ciderseq-mono/cideseq-mono/seqscape/runs/tylcv_is76_pipeline_validation_20260814/from_genomes_1000nt/is76_origin_window_1000nt_manifest.tsv&quot;</span></span>
+<span id="cb3-7"><a href="#cb3-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-8"><a href="#cb3-8" aria-hidden="true" tabindex="-1"></a><span class="ex">mafft</span> <span class="at">--auto</span> <span class="at">--thread</span> 8 <span class="dt">\</span></span>
+<span id="cb3-9"><a href="#cb3-9" aria-hidden="true" tabindex="-1"></a>  <span class="st">&quot;/Users/gerritkoorsen/ciderseq-mono/cideseq-mono/seqscape/runs/tylcv_is76_pipeline_validation_20260814/from_genomes_1000nt/is76_origin_window_1000nt.fasta&quot;</span> <span class="dt">\</span></span>
+<span id="cb3-10"><a href="#cb3-10" aria-hidden="true" tabindex="-1"></a>  <span class="op">&gt;</span> <span class="st">&quot;/Users/gerritkoorsen/ciderseq-mono/cideseq-mono/seqscape/runs/tylcv_is76_pipeline_validation_20260814/from_genomes_1000nt/is76_origin_window_1000nt_aligned.fasta&quot;</span></span>
+<span id="cb3-11"><a href="#cb3-11" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-12"><a href="#cb3-12" aria-hidden="true" tabindex="-1"></a><span class="va">PATH</span><span class="op">=</span><span class="st">&quot;/private/tmp/openrdp-validation-venv/bin:</span><span class="va">$PATH</span><span class="st">&quot;</span> <span class="va">PYTHONPATH</span><span class="op">=</span>src <span class="dt">\</span></span>
+<span id="cb3-13"><a href="#cb3-13" aria-hidden="true" tabindex="-1"></a><span class="ex">python</span> <span class="at">-m</span> seqscape.cli recombination <span class="dt">\</span></span>
+<span id="cb3-14"><a href="#cb3-14" aria-hidden="true" tabindex="-1"></a>  <span class="at">--alignment-fasta</span> <span class="st">&quot;/Users/gerritkoorsen/ciderseq-mono/cideseq-mono/seqscape/runs/tylcv_is76_pipeline_validation_20260814/from_genomes_1000nt/is76_origin_window_1000nt_aligned.fasta&quot;</span> <span class="dt">\</span></span>
+<span id="cb3-15"><a href="#cb3-15" aria-hidden="true" tabindex="-1"></a>  <span class="at">--methods</span> rdp,geneconv,maxchi,chimaera,threeseq,bootscan,siscan <span class="dt">\</span></span>
+<span id="cb3-16"><a href="#cb3-16" aria-hidden="true" tabindex="-1"></a>  <span class="at">--min-methods</span> 1 <span class="dt">\</span></span>
+<span id="cb3-17"><a href="#cb3-17" aria-hidden="true" tabindex="-1"></a>  <span class="at">--pvalue</span> 0.05 <span class="dt">\</span></span>
+<span id="cb3-18"><a href="#cb3-18" aria-hidden="true" tabindex="-1"></a>  <span class="at">--outdir</span> <span class="st">&quot;/Users/gerritkoorsen/ciderseq-mono/cideseq-mono/seqscape/runs/tylcv_is76_pipeline_validation_20260814/from_genomes_1000nt/recombination_strict_p005&quot;</span></span></code></pre></div>
+</body>
+</html>

@@ -1,0 +1,2 @@
+recombinant_resolved	backbone_parent	donor_parent	members	openrdp_recombinant_labels	n_methods	methods	breakpoint_start	breakpoint_end	start_min	end_max	min_pvalue	informative_sites_tract	informative_sites_flank	tract_supports	flank_supports	role_support
+LN812978	AM409201	NC_003828	AM409201;LN812978;NC_003828	LN812978	1	geneconv	494	604	494	604	0.0	21	215	NC_003828	AM409201	236

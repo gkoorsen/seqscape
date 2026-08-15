@@ -1,0 +1,6 @@
+recombinant	parent_a	parent_b	start	end	method	pvalue
+NC_003828	AM409201	LN812978	455	532	rdp	13.32467532467532
+LN812978	NC_003828		494	604	geneconv	0.0
+LN812978	AM409201		1	486	geneconv	0.03094
+AM409201			494	604	geneconv	0.0
+NC_003828			1	486	geneconv	0.02879
